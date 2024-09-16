@@ -6,14 +6,14 @@ class InputManager
 		this._pressed = {};
 		this._justPressed = {};
 		this._listeners = {"keydown": [], "keyup": []};
-		this._init();
+		this.#init();
 	}
-	_init()
+	#init()
 	{
-		this._add("w", "up");
-		this._add("s", "down");
-		this._add("a", "left");
-		this._add("d", "right");
+		this.#add("w", "up");
+		this.#add("s", "down");
+		this.#add("a", "left");
+		this.#add("d", "right");
 	}
 	pressed(keyname)
 	{
@@ -27,7 +27,7 @@ class InputManager
 		}
 		return false;
 	}
-	_add(keycode, keyname)
+	#add(keycode, keyname)
 	{
 		if (!(this.keymap[keycode] instanceof Array))
 				this.keymap[keycode] = [];
@@ -53,7 +53,7 @@ class InputManager
 		window.addEventListener("keydown", downCallback);
 		window.addEventListener("keyup", upCallback);
 	}
-	_clearListeners()
+	clearListeners()
 	{
 		for (kd in this._listeners["keydown"])
 			window.removeEventListener("keydown", kd);
