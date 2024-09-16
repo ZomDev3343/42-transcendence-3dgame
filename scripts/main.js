@@ -23,9 +23,6 @@ function main()
 		cube.rotation.x += 0.01;
 		cube.rotation.y += 0.01;
 
-		if (input.keyJustPressed("up"))
-			console.log("jfgewiogioewhgw");
-	
 		renderer.render(scene, camera);
 	}
 	renderer.setAnimationLoop(animationLoop);

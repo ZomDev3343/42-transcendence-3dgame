@@ -3,8 +3,8 @@ class InputManager
 	constructor()
 	{
 		this.keymap = {};
-		this.pressed = {};
-		this.justPressed = {};
+		this._pressed = {};
+		this._justPressed = {};
 		this._listeners = {"keydown": [], "keyup": []};
 		this._init();
 	}
@@ -15,14 +15,14 @@ class InputManager
 		this._add("a", "left");
 		this._add("d", "right");
 	}
-	keyPressed(keyname)
+	pressed(keyname)
 	{
-		return this.pressed[keyname] == true;
+		return this._pressed[keyname] == true;
 	}
-	keyJustPressed(keyname)
+	justPressed(keyname)
 	{
-		if (!this.justPressed[keyname] && this.pressed[keyname]){
-			this.justPressed[keyname] = true;
+		if (!this._justPressed[keyname] && this._pressed[keyname]){
+			this._justPressed[keyname] = true;
 			return true;
 		}
 		return false;
@@ -32,18 +32,18 @@ class InputManager
 		if (!(this.keymap[keycode] instanceof Array))
 				this.keymap[keycode] = [];
 		this.keymap[keycode].push(keyname);
-		this.pressed[keyname] = false;
+		this._pressed[keyname] = false;
 
 		let downCallback = ev => {
 			if (ev.key == keycode && !ev.repeat){
-				this.pressed[keyname] = true;
+				this._pressed[keyname] = true;
 			}
 		};
 
 		let upCallback = ev => {
 			if (ev.key == keycode && !ev.repeat){
-				this.pressed[keyname] = false;
-				this.justPressed[keyname] = false;
+				this._pressed[keyname] = false;
+				this._justPressed[keyname] = false;
 			}
 		};
 
