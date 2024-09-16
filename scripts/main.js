@@ -15,22 +15,26 @@ function main()
 	renderer.setClearColor(0x00dddd);
 	document.body.appendChild(renderer.domElement);
 	
-	let cube = makeCube(0x000000, 1);
-	scene.add(cube);
+	const cubes = [];
+	const amt = 100;
+	for (let i = 0; i < amt; i++)
+		cubes[i] = makeCube(Math.random() * 0xffffff, 1);
+	for (let i = 0; i < amt; i++)
+	{
+		cubes[i].position.x = -5 + Math.random() * 10;
+		cubes[i].position.y = -4 + Math.random() * 8;
+		cubes[i].rotation.x = Math.random() * Math.PI;
+		cubes[i].rotation.y = Math.random() * Math.PI;
+		scene.add(cubes[i]);
+	}
 	camera.position.z = 5;
 	
 	function animationLoop()
 	{
-		cube.rotation.x += 0.01;
-		cube.rotation.y += 0.01;
-
-		if (input.pressed("right")){
-			cube.position.x += 0.01;
+		for (let i = 0; i < amt; i++){
+			cubes[i].rotation.x += 0.01;
+			cubes[i].rotation.y += 0.01;
 		}
-		else if (input.pressed("left")){
-			cube.position.x -= 0.01;
-		}
-
 		renderer.render(scene, camera);
 	}
 	renderer.setAnimationLoop(animationLoop);
