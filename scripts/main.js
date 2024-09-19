@@ -1,5 +1,4 @@
 import * as THREE from 'three';
-import { makeCube } from './cube.js'
 import { InputManager } from './input.js';
 import * as Components from "./components.js";
 
@@ -19,9 +18,9 @@ function main()
 
 	camera.position.z = 5;
 	let go = new Components.GameObject("Yolo");
-	// TODO Adding parent automatically when adding a component to a gameobject
-	// Testing rendering of a level
-	level.add(new Components.GameObject("Yolo"));
+	go.add(new Components.BasicShape(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({color: 0})));
+	level.add(go);
+	level.create();
 
 	function animationLoop()
 	{
