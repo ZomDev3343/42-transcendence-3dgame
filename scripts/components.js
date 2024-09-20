@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import { LOG_ERROR, LOG_WARNING } from './game_logger.js';
+import { generateUUID } from 'three/src/math/MathUtils.js';
 
 class Component {
 	constructor(parent, scene) {
@@ -7,8 +8,11 @@ class Component {
 		this._position = new THREE.Vector3(0, 0, 0);
 		this._rotation = new THREE.Vector3(0, 0, 0);
 		this._scale = new THREE.Vector3(1, 1, 1);
+		this._uuid = generateUUID();
 		this.scene = scene;
 	}
+
+	get uuid() { return this._uuid; }
 
 	get parent() { return this._parent; }
 	set parent(pParent) {
@@ -35,6 +39,7 @@ class Component {
 	 * @param {number} _ Time elapsed since last frame
 	 */
 	update(_) { }
+	clone() { return this; }
 };
 
 class BasicShape extends Component {
@@ -67,6 +72,9 @@ class BasicShape extends Component {
 		this.mesh.position.copy(newPos);
 		this.mesh.rotation.setFromVector3(newRot);
 	}
+	clone() {
+		return new BasicShape(this.geometry, this.mat);
+	}
 };
 
 class GameObject extends Component {
@@ -76,12 +84,14 @@ class GameObject extends Component {
 	 */
 	constructor(pName) {
 		super(null, null);
-		this.name = pName;
+		this._name = pName;
 		/**
 		 * @type {Array<Component>}
 		 */
 		this.components = [];
 	}
+	get name() { return this._name; }
+	set name(pName) { this._name = pName; }
 	add(component) {
 		if (component instanceof Component) {
 			if (this.components.includes(component))
@@ -131,6 +141,16 @@ class GameObject extends Component {
 		for (let comp of this.components)
 			comp.update(dt);
 	}
+	clone() {
+		let cloneObj = new GameObject(this.name);
+		cloneObj.position = this.position.clone();
+		cloneObj.rotation = this.rotation.clone();
+		cloneObj.scale = this.scale.clone();
+		for (let comp of this.components)
+			cloneObj.add(comp.clone());
+		cloneObj.objUpdate = this.objUpdate;
+		return cloneObj;
+	}
 };
 
 class Level extends Component {
@@ -166,8 +186,9 @@ class Level extends Component {
 		}
 	}
 	create() {
-		for (let obj of this._objects)
+		for (let obj of this._objects) {
 			obj.create();
+		}
 	}
 	clear() {
 		for (let obj in this._objects) {
@@ -184,6 +205,9 @@ class Level extends Component {
 			}
 		}
 		this.prevTime = Date.now() / 1000.0;
+	}
+	findAll(objName){
+		return this._objects.filter((obj) => obj.name.startsWith(objName));
 	}
 };
 

@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import { InputManager } from './input.js';
 import * as Components from "./components.js";
+import { generateUUID } from 'three/src/math/MathUtils.js';
+import { findSpan } from 'three/examples/jsm/curves/NURBSUtils.js';
 
 const WIN_WIDTH = 1280;
 const WIN_HEIGHT = 720;
@@ -24,13 +26,22 @@ function main()
 		this.rotation.y += (Math.PI / 20) * dt;
 	};
 
-	level.add(go);
-	level.create();
+	for (let i = 0; i < 10; i++)
+	{
+		let goCopy = go.clone();
+		goCopy.name = "Yolo" + i;
+		goCopy.position.x = 1.25*i + 0.25;
+		level.add(goCopy);
+	}
+	go.position.x -= 1.15;
+	level.add(go);	
 
+	level.create();
 	function animationLoop()
 	{
 		if (input.justPressed("up"))
-			level.remove(go);
+		{
+		}
 		level.update();
 		renderer.render(scene, camera);
 	}
