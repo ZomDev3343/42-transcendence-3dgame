@@ -13,7 +13,7 @@ class Component {
 	get parent() { return this._parent; }
 	set parent(pParent) {
 		this._parent = pParent;
-		this._scene = pParent._scene; 
+		this._scene = pParent._scene;
 	}
 
 	get position() { return this._position; }
@@ -26,7 +26,7 @@ class Component {
 	set scale(pScale) { this._scale = pScale; }
 
 	get scene() { return this._scene; }
-	set scene(pScene) { this._scene = pScene;}
+	set scene(pScene) { this._scene = pScene; }
 
 	create() { }
 	remove() { }
@@ -50,16 +50,22 @@ class BasicShape extends Component {
 		this.mesh = new THREE.Mesh(this.geometry, this.mat);
 	}
 	create() {
-		console.log(this.parent);
 		this.parent.scene.add(this.mesh);
 	}
 	remove() {
 		this.parent.scene.remove(this.mesh);
 	}
 	update(_) {
-		this.mesh.position = this.parent.position + this.position;
-		this.mesh.rotation = this.parent.rotation + this.rotation;
-		this.mesh.scale = this.parent.scale + this.scale;
+		if (!this.parent)
+			return;
+		let newPos = this.position.clone();
+		let newRot = this.rotation.clone();
+
+		newPos.add(this.parent.position);
+		newRot.add(this.parent.rotation);
+
+		this.mesh.position.copy(newPos);
+		this.mesh.rotation.setFromVector3(newRot);
 	}
 };
 
@@ -103,8 +109,7 @@ class GameObject extends Component {
 			LOG_ERROR("%s gameobject is not affected to a level!", this.name);
 			return;
 		}
-		for (let comp of this.components)
-		{
+		for (let comp of this.components) {
 			if (comp instanceof Component)
 				comp.create();
 		}
@@ -118,10 +123,12 @@ class GameObject extends Component {
 			if (comp instanceof Component)
 				comp.remove();
 	}
+	objUpdate(dt) { }
 	update(dt) {
 		if (this.parent === null)
 			return;
-		for (let comp in this.components)
+		this.objUpdate(dt);
+		for (let comp of this.components)
 			comp.update(dt);
 	}
 };
@@ -158,9 +165,9 @@ class Level extends Component {
 			}
 		}
 	}
-	create(){
+	create() {
 		for (let obj of this._objects)
-				obj.create();
+			obj.create();
 	}
 	clear() {
 		for (let obj in this._objects) {
@@ -171,9 +178,11 @@ class Level extends Component {
 	update(_) {
 		let deltaTime = (Date.now() / 1000.0) - this.prevTime;
 
-		for (let obj in this._objects)
-			if (obj instanceof GameObject)
+		for (let obj of this._objects) {
+			if (obj instanceof GameObject) {
 				obj.update(deltaTime);
+			}
+		}
 		this.prevTime = Date.now() / 1000.0;
 	}
 };

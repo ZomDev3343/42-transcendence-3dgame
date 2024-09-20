@@ -19,11 +19,18 @@ function main()
 	camera.position.z = 5;
 	let go = new Components.GameObject("Yolo");
 	go.add(new Components.BasicShape(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({color: 0})));
+	go.objUpdate = function(dt) {
+		this.rotation.x += (Math.PI / 20) * dt;
+		this.rotation.y += (Math.PI / 20) * dt;
+	};
+
 	level.add(go);
 	level.create();
 
 	function animationLoop()
 	{
+		if (input.justPressed("up"))
+			level.remove(go);
 		level.update();
 		renderer.render(scene, camera);
 	}
