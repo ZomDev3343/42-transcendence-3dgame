@@ -211,4 +211,35 @@ class Level extends Component {
 	}
 };
 
-export { Component, BasicShape, GameObject, Level };
+class PlayerController extends Component
+{
+	constructor(input_manager, camera){
+		super(null, null);
+		this._input = input_manager;
+		this._camera = camera;
+	}
+
+	get input() { return this._input; }
+	set input (newInputManager) { this._input = newInputManager; }
+
+	/**
+	 * @returns {THREE.Camera}
+	 */
+	get camera() { return this._camera; }
+	set camera(newCamera) { this._camera = newCamera; }
+
+	update(dt){
+		if (!parent)
+			return ;
+		if (this.input.pressed("look_left")){
+			this.parent.rotation.y += (Math.PI / 5) * dt;
+		}
+		else if (this.input.pressed("look_right")){
+			this.parent.rotation.y += -(Math.PI / 5) * dt;
+		}
+		this.camera.position.copy(this.parent.position);
+		this.camera.rotation.setFromVector3(this.parent.rotation);
+	}
+};
+
+export { Component, BasicShape, GameObject, Level, PlayerController };

@@ -14,6 +14,8 @@ class InputManager
 		this.#add("s", "down");
 		this.#add("a", "left");
 		this.#add("d", "right");
+		this.#add("ArrowLeft", "look_left");
+		this.#add("ArrowRight", "look_right");
 	}
 	pressed(keyname)
 	{
@@ -55,9 +57,9 @@ class InputManager
 	}
 	clearListeners()
 	{
-		for (kd in this._listeners["keydown"])
+		for (kd of this._listeners["keydown"])
 			window.removeEventListener("keydown", kd);
-		for (kd in this._listeners["keyup"])
+		for (kd of this._listeners["keyup"])
 			window.removeEventListener("keyup", kd);
 	}
 
