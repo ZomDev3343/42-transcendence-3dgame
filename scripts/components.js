@@ -217,6 +217,7 @@ class PlayerController extends Component
 		super(null, null);
 		this._input = input_manager;
 		this._camera = camera;
+		this._moveSpeed = 4.0;
 	}
 
 	get input() { return this._input; }
@@ -228,14 +229,46 @@ class PlayerController extends Component
 	get camera() { return this._camera; }
 	set camera(newCamera) { this._camera = newCamera; }
 
+	getForward(){
+		return new THREE.Vector3(
+			Math.sin(this.parent.rotation.y) * Math.cos(this.parent.rotation.x),
+			0,
+			Math.cos(this.parent.rotation.y) * Math.cos(this.parent.rotation.x)
+		);
+	}
+
+	getRight(){
+		return new THREE.Vector3(
+			Math.cos(this.parent.rotation.y),
+			0,
+			-Math.sin(this.parent.rotation.y)
+		);
+	}
+
 	update(dt){
 		if (!parent)
 			return ;
 		if (this.input.pressed("look_left")){
-			this.parent.rotation.y += (Math.PI / 5) * dt;
+			this.parent.rotation.y += (Math.PI) * dt;
 		}
 		else if (this.input.pressed("look_right")){
-			this.parent.rotation.y += -(Math.PI / 5) * dt;
+			this.parent.rotation.y += -(Math.PI) * dt;
+		}
+		if (this.input.pressed("up")){
+			this.parent.position.x += -this.getForward().x * this._moveSpeed * dt;
+			this.parent.position.z += -this.getForward().z * this._moveSpeed * dt;
+		}
+		else if (this.input.pressed("down")){
+			this.parent.position.x += this.getForward().x * this._moveSpeed * dt;
+			this.parent.position.z += this.getForward().z * this._moveSpeed * dt;
+		}
+		else if (this.input.pressed("right")){
+			this.parent.position.x += this.getRight().x * this._moveSpeed * dt;
+			this.parent.position.z += this.getRight().z * this._moveSpeed * dt;
+		}
+		else if (this.input.pressed("left")){
+			this.parent.position.x += -this.getRight().x * this._moveSpeed * dt;
+			this.parent.position.z += -this.getRight().z * this._moveSpeed * dt;
 		}
 		this.camera.position.copy(this.parent.position);
 		this.camera.rotation.setFromVector3(this.parent.rotation);
