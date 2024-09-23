@@ -1,3 +1,5 @@
+import { WIN_HEIGHT, WIN_WIDTH } from "./constants";
+
 class InputManager
 {
 	constructor()
@@ -6,16 +8,18 @@ class InputManager
 		this._pressed = {};
 		this._justPressed = {};
 		this._listeners = {"keydown": [], "keyup": []};
+		this.mouseX = 0;
+		this.mouseY;
 		this.#init();
 	}
 	#init()
 	{
-		this.#add("w", "up");
-		this.#add("s", "down");
-		this.#add("a", "left");
-		this.#add("d", "right");
-		this.#add("ArrowLeft", "look_left");
-		this.#add("ArrowRight", "look_right");
+		this.#add_key("w", "up");
+		this.#add_key("s", "down");
+		this.#add_key("a", "left");
+		this.#add_key("d", "right");
+		this.#add_key("ArrowLeft", "look_left");
+		this.#add_key("ArrowRight", "look_right");
 	}
 	pressed(keyname)
 	{
@@ -29,7 +33,7 @@ class InputManager
 		}
 		return false;
 	}
-	#add(keycode, keyname)
+	#add_key(keycode, keyname)
 	{
 		if (!(this.keymap[keycode] instanceof Array))
 				this.keymap[keycode] = [];
@@ -38,6 +42,7 @@ class InputManager
 
 		let downCallback = ev => {
 			if (ev.key == keycode && !ev.repeat){
+				ev.preventDefault();
 				this._pressed[keyname] = true;
 			}
 		};
@@ -57,12 +62,10 @@ class InputManager
 	}
 	clearListeners()
 	{
-		for (kd of this._listeners["keydown"])
-			window.removeEventListener("keydown", kd);
-		for (kd of this._listeners["keyup"])
-			window.removeEventListener("keyup", kd);
+		for (key in this._listeners)
+			for (kd of this._listeners[key])
+				window.removeEventListener(key, kd);
 	}
-
 };
 
-export {InputManager}
+export {InputManager};

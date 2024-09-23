@@ -114,8 +114,20 @@ class GameObject extends Component {
 		else
 			LOG_ERROR("Can't add non-component to %s gameobject!", this.name);
 	}
+	/**
+	 * 
+	 * @param {typeof type} type 
+	 * @returns 
+	 */
+	getComponent(type){
+		for (let comp of this.components){
+			if (comp instanceof type)
+				return comp;
+		}
+		return undefined;
+	}
 	create() {
-		if (this.parent === null) {
+		if (this.parent === undefined) {
 			LOG_ERROR("%s gameobject is not affected to a level!", this.name);
 			return;
 		}
@@ -209,6 +221,9 @@ class Level extends Component {
 	findAll(objName){
 		return this._objects.filter((obj) => obj.name.startsWith(objName));
 	}
+	find(objName){
+		return this.findAll(objName)[0];
+	}
 };
 
 class PlayerController extends Component
@@ -231,17 +246,17 @@ class PlayerController extends Component
 
 	getForward(){
 		return new THREE.Vector3(
-			Math.sin(this.parent.rotation.y) * Math.cos(this.parent.rotation.x),
+			Math.sin(this.camera.rotation.y),
 			0,
-			Math.cos(this.parent.rotation.y) * Math.cos(this.parent.rotation.x)
+			Math.cos(this.camera.rotation.y)
 		);
 	}
 
 	getRight(){
 		return new THREE.Vector3(
-			Math.cos(this.parent.rotation.y),
+			Math.cos(this.camera.rotation.y),
 			0,
-			-Math.sin(this.parent.rotation.y)
+			-Math.sin(this.camera.rotation.y)
 		);
 	}
 
@@ -249,10 +264,10 @@ class PlayerController extends Component
 		if (!parent)
 			return ;
 		if (this.input.pressed("look_left")){
-			this.parent.rotation.y += (Math.PI) * dt;
+			this.camera.rotation.y += (Math.PI) * dt;
 		}
 		else if (this.input.pressed("look_right")){
-			this.parent.rotation.y += -(Math.PI) * dt;
+			this.camera.rotation.y += -(Math.PI) * dt;
 		}
 		if (this.input.pressed("up")){
 			this.parent.position.x += -this.getForward().x * this._moveSpeed * dt;
@@ -271,7 +286,7 @@ class PlayerController extends Component
 			this.parent.position.z += -this.getRight().z * this._moveSpeed * dt;
 		}
 		this.camera.position.copy(this.parent.position);
-		this.camera.rotation.setFromVector3(this.parent.rotation);
+		this.parent.rotation.copy(this.camera.rotation);
 	}
 };
 
