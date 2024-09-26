@@ -1,8 +1,9 @@
 import * as THREE from 'three'
 import { LOG_ERROR, LOG_WARNING } from './game_logger.js';
 import { generateUUID } from 'three/src/math/MathUtils.js';
+import { makeZombie } from './maker.js';
 
-class Component {
+export class Component {
 	constructor(parent, scene) {
 		this._parent = parent;
 		this._position = new THREE.Vector3(0, 0, 0);
@@ -35,6 +36,17 @@ class Component {
 	create() { }
 	remove() { }
 	/**
+	 * @returns {Level | null}
+	 */
+	getLevel() {
+		let tmp = this.parent;
+		if (!tmp)
+			return null;
+		while (tmp != null && !(tmp instanceof Level))
+			tmp = tmp.parent;
+		return tmp;
+	}
+	/**
 	 *
 	 * @param {number} _ Time elapsed since last frame
 	 */
@@ -42,7 +54,7 @@ class Component {
 	clone() { return this; }
 };
 
-class BasicShape extends Component {
+export class BasicShape extends Component {
 	/**
 	 * @param {Component} parent Parent of the component
 	 * @param {THREE.BufferGeometry} pShape Geometry of the mesh
@@ -77,7 +89,7 @@ class BasicShape extends Component {
 	}
 };
 
-class GameObject extends Component {
+export class GameObject extends Component {
 	/**
 	 * @param {Level} level
 	 * @param {string} pName
@@ -97,6 +109,7 @@ class GameObject extends Component {
 			if (this.components.includes(component))
 				return;
 			component.parent = this;
+			console.log(component);
 			this.components.push(component);
 		}
 		else
@@ -116,11 +129,11 @@ class GameObject extends Component {
 	}
 	/**
 	 * 
-	 * @param {typeof type} type 
+	 * @param {Component} type 
 	 * @returns 
 	 */
-	getComponent(type){
-		for (let comp of this.components){
+	getComponent(type) {
+		for (let comp of this.components) {
 			if (comp instanceof type)
 				return comp;
 		}
@@ -165,7 +178,7 @@ class GameObject extends Component {
 	}
 };
 
-class Level extends Component {
+export class Level extends Component {
 	/**
 	 *
 	 * @param {THREE.Scene} scene
@@ -218,25 +231,25 @@ class Level extends Component {
 		}
 		this.prevTime = Date.now() / 1000.0;
 	}
-	findAll(objName){
+	findAll(objName) {
 		return this._objects.filter((obj) => obj.name.startsWith(objName));
 	}
-	find(objName){
+	find(objName) {
 		return this.findAll(objName)[0];
 	}
 };
 
-class PlayerController extends Component
-{
-	constructor(input_manager, camera){
+export class PlayerController extends Component {
+	constructor(input_manager, camera) {
 		super(null, null);
 		this._input = input_manager;
 		this._camera = camera;
 		this._moveSpeed = 4.0;
+		this._score = 0;
 	}
 
 	get input() { return this._input; }
-	set input (newInputManager) { this._input = newInputManager; }
+	set input(newInputManager) { this._input = newInputManager; }
 
 	/**
 	 * @returns {THREE.Camera}
@@ -244,7 +257,7 @@ class PlayerController extends Component
 	get camera() { return this._camera; }
 	set camera(newCamera) { this._camera = newCamera; }
 
-	getForward(){
+	getForward() {
 		return new THREE.Vector3(
 			Math.sin(this.camera.rotation.y),
 			0,
@@ -252,7 +265,7 @@ class PlayerController extends Component
 		);
 	}
 
-	getRight(){
+	getRight() {
 		return new THREE.Vector3(
 			Math.cos(this.camera.rotation.y),
 			0,
@@ -260,28 +273,28 @@ class PlayerController extends Component
 		);
 	}
 
-	update(dt){
+	update(dt) {
 		if (!parent)
-			return ;
-		if (this.input.pressed("look_left")){
+			return;
+		if (this.input.pressed("look_left")) {
 			this.camera.rotation.y += (Math.PI) * dt;
 		}
-		else if (this.input.pressed("look_right")){
+		else if (this.input.pressed("look_right")) {
 			this.camera.rotation.y += -(Math.PI) * dt;
 		}
-		if (this.input.pressed("up")){
+		if (this.input.pressed("up")) {
 			this.parent.position.x += -this.getForward().x * this._moveSpeed * dt;
 			this.parent.position.z += -this.getForward().z * this._moveSpeed * dt;
 		}
-		else if (this.input.pressed("down")){
+		else if (this.input.pressed("down")) {
 			this.parent.position.x += this.getForward().x * this._moveSpeed * dt;
 			this.parent.position.z += this.getForward().z * this._moveSpeed * dt;
 		}
-		else if (this.input.pressed("right")){
+		else if (this.input.pressed("right")) {
 			this.parent.position.x += this.getRight().x * this._moveSpeed * dt;
 			this.parent.position.z += this.getRight().z * this._moveSpeed * dt;
 		}
-		else if (this.input.pressed("left")){
+		else if (this.input.pressed("left")) {
 			this.parent.position.x += -this.getRight().x * this._moveSpeed * dt;
 			this.parent.position.z += -this.getRight().z * this._moveSpeed * dt;
 		}
@@ -289,5 +302,86 @@ class PlayerController extends Component
 		this.parent.rotation.copy(this.camera.rotation);
 	}
 };
+/*
+ * TODO
+	- Spawn des zombies sur des points precis de la map sur un perimetre
+	- 
+*/
 
-export { Component, BasicShape, GameObject, Level, PlayerController };
+export class ZombieAI extends Component {
+	constructor() {
+		super(null, null);
+		this._velX = 1 - Math.random() * 2;
+		this._velY = 1 - Math.random() * 2;
+		this._moveSpeed = 1.0;
+	}
+	update(dt) {
+		if (!parent)
+			return;
+		this.parent.position.x += this._velX * this._moveSpeed * dt;
+		this.parent.position.y += this._velY * this._moveSpeed * dt;
+	}
+};
+
+export class SpawnerManager extends Component {
+	constructor() {
+		super(null, null);
+		this._round = 0;
+		this._timeBeforeRound = 20;
+		this._roundStarted = false;
+		this._spawners = [];
+	}
+	get timeBeforeRound() { if (this._round == 1) return 20; else return 8; }
+	addSpawner(spawner) {
+		if (spawner instanceof ZombieSpawner) {
+			spawner.parent = this;
+			this._spawners.push(spawner);
+		}
+	}
+	startRound() {
+		if (this._roundStarted)
+			return ;
+		this._round++;
+		// Show round number
+		console.log("Round started %d started!");
+		for (let spawner of this._spawners) {
+			if (spawner instanceof ZombieSpawner) {
+				spawner._leftToSpawn = 3 + (2 * (this._round - 1));
+				setTimeout(spawner.spawn(), 1000 + Math.random() * 1500)
+			}
+		}
+		this._roundStarted = true;
+	}
+};
+
+export class ZombieSpawner extends Component {
+
+	static spawnerID = 0;
+
+	/**
+	 * @param {THREE.Vector3} pos 
+	 */
+	constructor(pos) {
+		super("ZombieSpawner" + ZombieSpawner.spawnerID++);
+		this.position.copy(pos);
+		this.position.y = 1;
+		this._manager = null;
+		this._spawnRate = 2.5;
+		this._leftToSpawn = 3;
+		this._spawnRange = 8;
+	}
+	spawn() {
+		if (!parent || this._leftToSpawn <= 0)
+			return;
+		let level = this.getLevel();
+		if (level) {
+			let spawnPos = this.position.clone();
+			spawnPos.x += Math.random() * 2;
+			spawnPos.y = 1.5;
+			let zomb = makeZombie(spawnPos);
+			this.getLevel().add(zomb);
+			this._leftToSpawn--;
+			setTimeout(this.spawn(), this._spawnRate * 1000);
+		}
+	}
+};

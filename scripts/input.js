@@ -20,6 +20,7 @@ class InputManager
 		this.#add_key("d", "right");
 		this.#add_key("ArrowLeft", "look_left");
 		this.#add_key("ArrowRight", "look_right");
+		this.#add_key("e", "use");
 	}
 	pressed(keyname)
 	{
