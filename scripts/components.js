@@ -302,17 +302,12 @@ export class PlayerController extends Component {
 		this.parent.rotation.copy(this.camera.rotation);
 	}
 };
-/*
- * TODO
-	- Spawn des zombies sur des points precis de la map sur un perimetre
-	- 
-*/
 
 export class ZombieAI extends Component {
 	constructor() {
 		super(null, null);
-		this._velX = 1 - Math.random() * 2;
-		this._velY = 1 - Math.random() * 2;
+		this._velX = 0;
+		this._velY = 0;
 		this._moveSpeed = 1.0;
 	}
 	update(dt) {
@@ -338,7 +333,7 @@ export class SpawnerManager extends Component {
 			this._spawners.push(spawner);
 		}
 	}
-	startRound() {
+	async startRound() {
 		if (this._roundStarted)
 			return ;
 		this._round++;
@@ -347,7 +342,8 @@ export class SpawnerManager extends Component {
 		for (let spawner of this._spawners) {
 			if (spawner instanceof ZombieSpawner) {
 				spawner._leftToSpawn = 3 + (2 * (this._round - 1));
-				setTimeout(spawner.spawn(), 1000 + Math.random() * 1500)
+				spawner.spawn();
+				await new Promise(r => setTimeout(r, 1000 + Math.random() * 1500));
 			}
 		}
 		this._roundStarted = true;
@@ -366,22 +362,25 @@ export class ZombieSpawner extends Component {
 		this.position.copy(pos);
 		this.position.y = 1;
 		this._manager = null;
-		this._spawnRate = 2.5;
+		this._spawnRate = 5;
 		this._leftToSpawn = 3;
 		this._spawnRange = 8;
 	}
-	spawn() {
+	async spawn() {
 		if (!parent || this._leftToSpawn <= 0)
 			return;
 		let level = this.getLevel();
 		if (level) {
 			let spawnPos = this.position.clone();
+			
 			spawnPos.x += Math.random() * 2;
 			spawnPos.y = 1.5;
 			let zomb = makeZombie(spawnPos);
 			this.getLevel().add(zomb);
 			this._leftToSpawn--;
-			setTimeout(this.spawn(), this._spawnRate * 1000);
+			
+			await new Promise(resolve => setTimeout(resolve, this._spawnRate * 1000));
+			this.spawn();
 		}
 	}
 };
