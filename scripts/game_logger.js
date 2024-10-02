@@ -7,7 +7,7 @@ function LOG_INFO(msg){
 }
 
 function LOG_WARNING(msg){
-	console.log("%c [WARNING]: %s", 'color: yellow;', msg);
+	console.log("%c [WARNING]: %s", 'color: purple;', msg);
 }
 
 function LOG_ERROR(msg){

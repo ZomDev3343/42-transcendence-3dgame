@@ -1,7 +1,8 @@
 import * as THREE from 'three'
-import { LOG_ERROR, LOG_WARNING } from './game_logger.js';
+import { LOG_DEBUG, LOG_ERROR, LOG_WARNING } from './game_logger.js';
 import { generateUUID } from 'three/src/math/MathUtils.js';
 import { makeZombie } from './maker.js';
+import { sleep } from './utils.js';
 
 export class Component {
 	constructor(parent, scene) {
@@ -309,12 +310,19 @@ export class ZombieAI extends Component {
 		this._velX = 0;
 		this._velY = 0;
 		this._moveSpeed = 1.0;
+		this._directionHelper = new THREE.ArrowHelper();
+	}
+	create(){
+		super.create();
+		this._directionHelper.position.copy(this.parent.position);
+		this.parent.scene.add(this._directionHelper);
 	}
 	update(dt) {
 		if (!parent)
 			return;
 		this.parent.position.x += this._velX * this._moveSpeed * dt;
 		this.parent.position.y += this._velY * this._moveSpeed * dt;
+		this._directionHelper.setDirection(new THREE.Vector3(-Math.cos(this.parent.rotation.y), 0, Math.sin(this.parent.rotation.y)).normalize());
 	}
 };
 
@@ -322,11 +330,10 @@ export class SpawnerManager extends Component {
 	constructor() {
 		super(null, null);
 		this._round = 0;
-		this._timeBeforeRound = 20;
 		this._roundStarted = false;
 		this._spawners = [];
 	}
-	get timeBeforeRound() { if (this._round == 1) return 20; else return 8; }
+	get timeBeforeRound() { if (this._round == 1) return 2; else return 8; }
 	addSpawner(spawner) {
 		if (spawner instanceof ZombieSpawner) {
 			spawner.parent = this;
@@ -338,15 +345,44 @@ export class SpawnerManager extends Component {
 			return ;
 		this._round++;
 		// Show round number
-		console.log("Round started %d started!");
+		LOG_DEBUG("Round %d is starting...", this._round)
+		await sleep(this.timeBeforeRound * 1000);
+		LOG_DEBUG("Round started %d started!", this._round);
+		this._roundStarted = true;
 		for (let spawner of this._spawners) {
 			if (spawner instanceof ZombieSpawner) {
+				await sleep(1000 + Math.random() * 1500);
 				spawner._leftToSpawn = 3 + (2 * (this._round - 1));
 				spawner.spawn();
-				await new Promise(r => setTimeout(r, 1000 + Math.random() * 1500));
 			}
 		}
-		this._roundStarted = true;
+	}
+};
+
+export class AnimatedModel extends Component {
+	constructor(gltf){
+		super(null, null);
+		this._gltf = gltf;
+	}
+
+	get gltf() { return this._gltf; }
+	set gltf(_) {}
+	
+	create(){
+		this.parent.scene.add(this.gltf.scene);
+	}
+	remove() {
+		this.parent.scene.remove(this.gltf.scene);
+	}
+	update(_) {
+		if (!this.parent)
+			return ;
+		this.gltf.scene.position.copy(this.parent.position);
+		this.gltf.scene.scale.copy(this.parent.scale);
+		this.gltf.scene.rotation.setFromVector3(this.parent.rotation);
+	}
+	playAnimation(animName) {
+		
 	}
 };
 
@@ -379,7 +415,7 @@ export class ZombieSpawner extends Component {
 			this.getLevel().add(zomb);
 			this._leftToSpawn--;
 			
-			await new Promise(resolve => setTimeout(resolve, this._spawnRate * 1000));
+			await sleep(this._spawnRate * 1000);
 			this.spawn();
 		}
 	}
