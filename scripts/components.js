@@ -381,17 +381,14 @@ class AnimationSystem {
 		if (name in this.anims) {
 			let animation = this.anims[name];
 			animation.enabled = true;
-			animation.setEffectiveTimeScale(1);
-			animation.setEffectiveWeight(1);
 			animation.play();
 		}
 	}
 	compileAnims() {
 		for (let i = 0; i < this._gltf.animations.length
 				&& i < this.poses.length; i++) {
-			this.anims[this.poses[i]] = this._mixer.clipAction(this._gltf.animations[i]);
+			this.anims[this.poses[i]] = this._mixer.clipAction(this._gltf.animations[i].clone());
 		}
-		LOG_DEBUG(this._gltf.animations);
 		this.poses.length = 0;
 	}
 };

@@ -1,5 +1,6 @@
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { LOG_DEBUG, LOG_ERROR, LOG_INFO, LOG_WARNING } from "./game_logger";
+import { generateUUID } from "three/src/math/MathUtils.js";
 
 export async function sleep(ms) {
 	return new Promise(r => setTimeout(r, ms));
@@ -35,7 +36,7 @@ export class ModelManager {
 		if (modelsAmount > 0) {
 			for (let modelInfo of this._modelsToLoad) {
 				this.loader.load(modelInfo.path,
-					model => {this.addModel(modelInfo.name, model), modelsLoaded++;},
+					model => { this.addModel(modelInfo.name, model), modelsLoaded++; },
 					xhr => LOG_DEBUG(modelInfo.name + " model is loading : " + xhr.loaded / xhr.total * 100 + " / 100%"),
 					err => { loadingError = true; errorMsg = err; }
 				);
@@ -57,8 +58,8 @@ export class ModelManager {
 	}
 
 	getModel(name) {
-		if (this.models[name] !== undefined) {
-			return this.models[name];
+		if (name in this.models) {
+			return {scene: this.models[name].scene.clone(), animations: this.models[name].animations};
 		}
 		return undefined;
 	}
