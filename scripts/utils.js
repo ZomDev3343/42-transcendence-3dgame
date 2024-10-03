@@ -1,6 +1,5 @@
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { LOG_DEBUG, LOG_ERROR, LOG_INFO, LOG_WARNING } from "./game_logger";
-import { generateUUID } from "three/src/math/MathUtils.js";
 
 export async function sleep(ms) {
 	return new Promise(r => setTimeout(r, ms));
