@@ -1,6 +1,5 @@
 import { Vector3 } from "three";
-import { GameObject, ZombieAI, AnimatedModel } from "./components";
-import { ModelManager } from "./utils";
+import { GameObject, ZombieAI, ZombieModel } from "./components";
 
 /**
  * @param {Vector3} pos 
@@ -10,6 +9,6 @@ export function makeZombie(pos) {
 	let zomb = new GameObject("Zombie");
 	zomb.position.copy(pos);
 	zomb.add(new ZombieAI());
-	zomb.add(new AnimatedModel(ModelManager.INSTANCE.getModel("test")))
+	zomb.add(new ZombieModel());
 	return zomb;
 };

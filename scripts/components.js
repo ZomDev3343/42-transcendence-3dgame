@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import { LOG_DEBUG, LOG_ERROR, LOG_WARNING } from './game_logger.js';
 import { generateUUID } from 'three/src/math/MathUtils.js';
 import { makeZombie } from './maker.js';
-import { sleep } from './utils.js';
+import { ModelManager, sleep } from './utils.js';
 
 export class Component {
 	constructor(parent, scene) {
@@ -312,7 +312,7 @@ export class ZombieAI extends Component {
 		this._moveSpeed = 1.0;
 		this._directionHelper = new THREE.ArrowHelper();
 	}
-	create(){
+	create() {
 		super.create();
 		this._directionHelper.position.copy(this.parent.position);
 		this.parent.scene.add(this._directionHelper);
@@ -342,7 +342,7 @@ export class SpawnerManager extends Component {
 	}
 	async startRound() {
 		if (this._roundStarted)
-			return ;
+			return;
 		this._round++;
 		// Show round number
 		LOG_DEBUG("Round %d is starting...", this._round)
@@ -359,32 +359,84 @@ export class SpawnerManager extends Component {
 	}
 };
 
+class AnimationSystem {
+	constructor(gltf) {
+		this._gltf = gltf;
+		this._poses = [];
+		this._anims = {};
+		this._mixer = new THREE.AnimationMixer(this._gltf.scene);
+	}
+	get poses() { return this._poses; }
+	set poses(_) { }
+
+	get anims() { return this._anims; }
+	set anims(_) { }
+
+	addPose(name) {
+		if (!(this.poses.includes(name))){
+			this.poses.push(name);
+		}
+	}
+	playAnim(name) {
+		if (name in this.anims) {
+			let animation = this.anims[name];
+			animation.enabled = true;
+			animation.setEffectiveTimeScale(1);
+			animation.setEffectiveWeight(1);
+			animation.play();
+		}
+	}
+	compileAnims() {
+		for (let i = 0; i < this._gltf.animations.length
+				&& i < this.poses.length; i++) {
+			this.anims[this.poses[i]] = this._mixer.clipAction(this._gltf.animations[i]);
+		}
+		LOG_DEBUG(this._gltf.animations);
+		this.poses.length = 0;
+	}
+};
+
 export class AnimatedModel extends Component {
-	constructor(gltf){
+	constructor(gltf) {
 		super(null, null);
 		this._gltf = gltf;
+		this._anim = new AnimationSystem(this._gltf);
 	}
 
 	get gltf() { return this._gltf; }
-	set gltf(_) {}
-	
-	create(){
+	set gltf(_) { }
+
+	get anim() { return this._anim; }
+	set anim(_) { }
+
+	create() {
 		this.parent.scene.add(this.gltf.scene);
 	}
 	remove() {
 		this.parent.scene.remove(this.gltf.scene);
 	}
-	update(_) {
+	update(dt) {
 		if (!this.parent)
-			return ;
-		this.gltf.scene.position.copy(this.parent.position);
-		this.gltf.scene.scale.copy(this.parent.scale);
-		this.gltf.scene.rotation.setFromVector3(this.parent.rotation);
-	}
-	playAnimation(animName) {
-		
+			return;
+		this.gltf.scene.position.copy(this.parent.position.clone().add(this.position));
+		this.gltf.scene.scale.copy(this.scale);
+		this.gltf.scene.rotation.setFromVector3(this.parent.rotation.clone().add(this.rotation));
+		this.anim._mixer.update(dt);
 	}
 };
+
+export class ZombieModel extends AnimatedModel {
+	constructor() {
+		super(ModelManager.INSTANCE.getModel("test"));
+		this.anim.addPose("idle");
+		this.anim.compileAnims();
+		this.scale.multiplyScalar(0.5);
+	}
+	create(){
+		this.anim.playAnim("idle");
+		super.create();
+	}
+}
 
 export class ZombieSpawner extends Component {
 
@@ -408,13 +460,13 @@ export class ZombieSpawner extends Component {
 		let level = this.getLevel();
 		if (level) {
 			let spawnPos = this.position.clone();
-			
+
 			spawnPos.x += Math.random() * 2;
 			spawnPos.y = 1.5;
 			let zomb = makeZombie(spawnPos);
 			this.getLevel().add(zomb);
 			this._leftToSpawn--;
-			
+
 			await sleep(this._spawnRate * 1000);
 			this.spawn();
 		}
