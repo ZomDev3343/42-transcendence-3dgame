@@ -10,5 +10,8 @@ export function makeZombie(pos) {
 	zomb.position.copy(pos);
 	zomb.add(new ZombieAI());
 	zomb.add(new ZombieModel());
+	zomb.objUpdate = (_) => {
+		zomb.getComponent(ZombieModel)._rotation = zomb.rotation;
+	};
 	return zomb;
 };

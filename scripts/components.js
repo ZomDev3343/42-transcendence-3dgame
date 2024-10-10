@@ -159,7 +159,7 @@ export class GameObject extends Component {
 			if (comp instanceof Component)
 				comp.remove();
 	}
-	objUpdate(dt) { }
+	objUpdate(_) { }
 	update(dt) {
 		if (this.parent === null)
 			return;
@@ -187,8 +187,13 @@ export class Level extends Component {
 	constructor(scene) {
 		super(null, scene);
 		this.prevTime = Date.now() / 1000.0;
+		this._player = null;
 		this._objects = [];
 	}
+
+	get player() { return this._player; }
+	set player(_) { }
+
 	add(gameobject) {
 		if (gameobject instanceof GameObject) {
 			if (this._objects.includes(gameobject))
@@ -215,6 +220,11 @@ export class Level extends Component {
 		for (let obj of this._objects) {
 			obj.create();
 		}
+		let player = this.find("Player");
+		if (player === undefined)
+			LOG_ERROR("Level doesn't contain a Player game object!");
+		else
+			this._player = player;
 	}
 	clear() {
 		for (let obj in this._objects) {
@@ -236,7 +246,10 @@ export class Level extends Component {
 		return this._objects.filter((obj) => obj.name.startsWith(objName));
 	}
 	find(objName) {
-		return this.findAll(objName)[0];
+		let found = this.findAll(objName);
+		if (found.length == 0)
+			return undefined;
+		return found[0];
 	}
 };
 
@@ -310,19 +323,45 @@ export class ZombieAI extends Component {
 		this._velX = 0;
 		this._velY = 0;
 		this._moveSpeed = 1.0;
+		this._refreshPeriod = 1000 / 60;
+		this._isRefreshing = false;
 		this._directionHelper = new THREE.ArrowHelper();
+	}
+	getForward() {
+		return new THREE.Vector3(
+			Math.sin(this.parent.rotation.y),
+			0,
+			Math.cos(this.parent.rotation.y)
+		);
 	}
 	create() {
 		super.create();
 		this._directionHelper.position.copy(this.parent.position);
 		this.parent.scene.add(this._directionHelper);
 	}
+	remove() {
+		super.remove();
+		this.parent.scene.remove(this._directionHelper);
+	}
 	update(dt) {
 		if (!parent)
 			return;
-		this.parent.position.x += this._velX * this._moveSpeed * dt;
-		this.parent.position.y += this._velY * this._moveSpeed * dt;
+		this.parent.position.x += this.getForward().x * this._moveSpeed * dt;
+		this.parent.position.z += this.getForward().z * this._moveSpeed * dt;
 		this._directionHelper.setDirection(new THREE.Vector3(-Math.cos(this.parent.rotation.y), 0, Math.sin(this.parent.rotation.y)).normalize());
+		if (this._isRefreshing === false)
+			this.lookForPlayer();
+	}
+	async lookForPlayer() {
+		this._isRefreshing = true;
+		await sleep(this._refreshPeriod);
+		if (this.getLevel() !== undefined || this.getLevel().player === undefined) {
+			let player = this.getLevel().player;
+			let dirX = player.position.x - this.parent.position.x;
+			let dirZ = player.position.z - this.parent.position.z;
+			this.parent.rotation.y = Math.atan2(dirX, dirZ);
+			this._isRefreshing = false;
+		}
 	}
 };
 
@@ -373,7 +412,7 @@ class AnimationSystem {
 	set anims(_) { }
 
 	addPose(name) {
-		if (!(this.poses.includes(name))){
+		if (!(this.poses.includes(name))) {
 			this.poses.push(name);
 		}
 	}
@@ -386,7 +425,7 @@ class AnimationSystem {
 	}
 	compileAnims() {
 		for (let i = 0; i < this._gltf.animations.length
-				&& i < this.poses.length; i++) {
+			&& i < this.poses.length; i++) {
 			this.anims[this.poses[i]] = this._mixer.clipAction(this._gltf.animations[i].clone());
 		}
 		this.poses.length = 0;
@@ -429,7 +468,7 @@ export class ZombieModel extends AnimatedModel {
 		this.anim.compileAnims();
 		this.scale.multiplyScalar(0.5);
 	}
-	create(){
+	create() {
 		this.anim.playAnim("idle");
 		super.create();
 	}
