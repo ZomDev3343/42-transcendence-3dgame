@@ -17,8 +17,8 @@ class InputManager {
 		this.#add_key("s", "down");
 		this.#add_key("a", "left");
 		this.#add_key("d", "right");
-		this.#add_key("ArrowLeft", "look_left");
-		this.#add_key("ArrowRight", "look_right");
+		this.#add_key("ArrowLeft", "look_left", true);
+		this.#add_key("ArrowRight", "look_right", true);
 		this.#add_key("e", "use");
 		this.#add_key("r", "reload");
 
@@ -54,7 +54,7 @@ class InputManager {
 		}
 		return false;
 	}
-	#add_key(keycode, keyname) {
+	#add_key(keycode, keyname, cancelDefault = false) {
 		if (!(this.keymap[keycode] instanceof Array))
 			this.keymap[keycode] = [];
 		this.keymap[keycode].push(keyname);
@@ -62,7 +62,8 @@ class InputManager {
 
 		let downCallback = ev => {
 			if (ev.key == keycode && !ev.repeat) {
-				ev.preventDefault();
+				if (cancelDefault)
+					ev.preventDefault();
 				this._pressed[keyname] = true;
 			}
 		};
