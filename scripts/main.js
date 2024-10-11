@@ -25,7 +25,7 @@ function makeMainLevel(scene, inputManager, camera) {
 
 	const player = new GameObject("Player");
 	player.add(new PlayerController(inputManager, camera));
-	player.add(new PlayerGun());
+	player.add(new PlayerGun(inputManager));
 	player.position.y = 1;
 
 	const spawner = new GameObject("SpawnerManager");

@@ -8,6 +8,7 @@ import { GameObject, ZombieAI, ZombieModel } from "./components";
 export function makeZombie(pos) {
 	let zomb = new GameObject("Zombie");
 	zomb.position.copy(pos);
+	zomb.position.y = 1.3;
 	zomb.add(new ZombieAI());
 	zomb.add(new ZombieModel());
 	zomb.objUpdate = (_) => {

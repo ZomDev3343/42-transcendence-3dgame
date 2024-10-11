@@ -189,6 +189,7 @@ export class Level extends Component {
 		this.prevTime = Date.now() / 1000.0;
 		this._player = null;
 		this._objects = [];
+		this._zombiesObjs = [];
 	}
 
 	get player() { return this._player; }
@@ -419,9 +420,12 @@ class AnimationSystem {
 	playAnim(name) {
 		if (name in this.anims) {
 			let animation = this.anims[name];
+			animation.time = 0;
 			animation.enabled = true;
 			animation.play();
 		}
+		else
+			LOG_WARNING("Can't find " + name + " animation!");
 	}
 	compileAnims() {
 		for (let i = 0; i < this._gltf.animations.length
@@ -475,15 +479,26 @@ export class ZombieModel extends AnimatedModel {
 };
 
 export class PlayerGun extends Component {
-	
-	constructor() {
+
+	constructor(inputManager) {
 		super(null, null);
+		this._input = inputManager;
 		this._shootDelay = 200;
-		this._refreshRate = 1;
+		this._hasShot = false;
+		this._reloadTime = 1500;
+		this._isReloading = false;
+		this._shootRange = 10;
 		this._isRefreshing = false;
 		this._playerController = null;
 		this._dmg = 1;
 		this._model = new AnimatedModel(ModelManager.INSTANCE.getModel("gun"));
+		this._model.anim.addPose("reload");
+		this._model.anim.addPose("shoot");
+		this._model.anim.compileAnims();
+		LOG_DEBUG(this._model.anim._anims);
+		for (let anim in this._model.anim.anims) {
+			this._model.anim.anims[anim].repetitions = 1;
+		}
 	}
 	create() {
 		this._model.parent = this.parent;
@@ -492,23 +507,59 @@ export class PlayerGun extends Component {
 		this._model.scale.x = 0.25;
 		this._model.scale.y = 0.25;
 		this._model.scale.z = 0.25;
-		this.position.y = -0.2;
 		this._model.rotation.y = -Math.PI / 2 - Math.PI / 8;
+		this.position.y = -0.2;
 	}
-	remove(){
+	remove() {
 		this._model.remove();
 	}
-	update(_) {
-		if(!this.parent)
+	update(dt) {
+		if (!this.parent)
 			return;
+		if (this._isReloading === false
+			&& this._input.justPressed("reload"))
+			this.reload();
+		if (this._hasShot === false && this._isReloading === false
+			&& this._input.justClicked(0) === true)
+			this.shoot();
 		this.updatePos();
-		this._model.update();
+		this._model.update(dt);
 	}
 	updatePos() {
-		//await sleep(this._refreshRate);
 		this.position.x = -0.3 * this._playerController.getForward().x + 0.5 * this._playerController.getRight().x;
 		this.position.z = -0.3 * this._playerController.getForward().z + 0.5 * this._playerController.getRight().z;
 		this._model.position.copy(this.position);
+	}
+	async shoot() {
+		this._hasShot = true;
+		const startPos = this._playerController.camera.position.clone();
+		const ray = new THREE.Raycaster(startPos, this._playerController.getForward().multiplyScalar(-1).normalize(), 0.1, this._shootRange);
+		const zombiesObjs = [];
+		this.parent.scene.add(new THREE.ArrowHelper(this._playerController.getForward().multiplyScalar(-1).normalize(), this._playerController.camera.position));
+		for (let zombie of this.getLevel().findAll("Zombie")) {
+			if (zombie.name === "Zombie") {
+				zombiesObjs.push(zombie.getComponent(ZombieModel).gltf.scene);
+			}
+		}
+		LOG_DEBUG("Player shot!");
+		if (zombiesObjs.length > 0) {
+			const touched = ray.intersectObjects(zombiesObjs);
+			LOG_DEBUG("Got all zombies");
+			if (touched.length > 0) {
+				LOG_DEBUG("First touched distance : " + touched[0].distance);
+				if (touched.length > 1)
+					LOG_DEBUG("Second touched distance : " + touched[1].distance);
+			}
+		}
+		this._model.anim.playAnim("shoot");
+		await sleep(this._shootDelay);
+		this._hasShot = false;
+	}
+	async reload() {
+		this._isReloading = true;
+		this._model.anim.playAnim("reload");
+		await sleep(this._reloadTime);
+		this._isReloading = false;
 	}
 };
 
