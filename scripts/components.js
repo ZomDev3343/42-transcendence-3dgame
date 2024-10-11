@@ -539,6 +539,11 @@ export class PlayerGun extends Component {
 		const ray = new THREE.Raycaster(startPos, this._playerController.getForward().multiplyScalar(-1).normalize(), 0.1, this._shootRange);
 		const zombiesObjs = [];
 		this.parent.scene.add(new THREE.ArrowHelper(this._playerController.getForward().multiplyScalar(-1).normalize(), this._playerController.camera.position));
+		this._model.anim.playAnim("shoot");
+		this._mag--;
+		LOG_DEBUG("Current munitions : " + this._mag);
+		// Play fire sound
+		await sleep(50);
 		for (let zombie of this.getLevel().findAll("Zombie")) {
 			if (zombie.name === "Zombie") {
 				zombiesObjs.push(zombie.getComponent(ZombieModel).gltf.scene);
@@ -552,11 +557,10 @@ export class PlayerGun extends Component {
 				LOG_DEBUG("First touched distance : " + touched[0].distance);
 				if (touched.length > 1)
 					LOG_DEBUG("Second touched distance : " + touched[1].distance);
+				// Play hit marker sound
 			}
 		}
-		this._model.anim.playAnim("shoot");
-		this._mag--;
-		LOG_DEBUG("Current munitions : " + this._mag);
+		
 		await sleep(this._shootDelay);
 		this._hasShot = false;
 	}
