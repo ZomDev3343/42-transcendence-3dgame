@@ -480,13 +480,15 @@ export class ZombieModel extends AnimatedModel {
 
 export class PlayerGun extends Component {
 
-	constructor(inputManager) {
+	constructor(inputManager, reloadTime = 1500, shootDelay = 200, magCapacity = 20) {
 		super(null, null);
 		this._input = inputManager;
-		this._shootDelay = 200;
+		this._shootDelay = shootDelay;
 		this._hasShot = false;
-		this._reloadTime = 1500;
+		this._reloadTime = reloadTime;
 		this._isReloading = false;
+		this._magCapacity = magCapacity;
+		this._mag = magCapacity;
 		this._shootRange = 10;
 		this._isRefreshing = false;
 		this._playerController = null;
@@ -516,10 +518,11 @@ export class PlayerGun extends Component {
 	update(dt) {
 		if (!this.parent)
 			return;
-		if (this._isReloading === false
+		if (this._isReloading === false && this._mag < this._magCapacity
 			&& this._input.justPressed("reload"))
 			this.reload();
 		if (this._hasShot === false && this._isReloading === false
+			&& this._mag > 0
 			&& this._input.justClicked(0) === true)
 			this.shoot();
 		this.updatePos();
@@ -552,12 +555,15 @@ export class PlayerGun extends Component {
 			}
 		}
 		this._model.anim.playAnim("shoot");
+		this._mag--;
+		LOG_DEBUG("Current munitions : " + this._mag);
 		await sleep(this._shootDelay);
 		this._hasShot = false;
 	}
 	async reload() {
 		this._isReloading = true;
 		this._model.anim.playAnim("reload");
+		this._mag = this._magCapacity;
 		await sleep(this._reloadTime);
 		this._isReloading = false;
 	}
