@@ -472,7 +472,45 @@ export class ZombieModel extends AnimatedModel {
 		this.anim.playAnim("idle");
 		super.create();
 	}
-}
+};
+
+export class PlayerGun extends Component {
+	
+	constructor() {
+		super(null, null);
+		this._shootDelay = 200;
+		this._refreshRate = 1;
+		this._isRefreshing = false;
+		this._playerController = null;
+		this._dmg = 1;
+		this._model = new AnimatedModel(ModelManager.INSTANCE.getModel("gun"));
+	}
+	create() {
+		this._model.parent = this.parent;
+		this._playerController = this.parent.getComponent(PlayerController);
+		this._model.create();
+		this._model.scale.x = 0.25;
+		this._model.scale.y = 0.25;
+		this._model.scale.z = 0.25;
+		this.position.y = -0.2;
+		this._model.rotation.y = -Math.PI / 2 - Math.PI / 8;
+	}
+	remove(){
+		this._model.remove();
+	}
+	update(_) {
+		if(!this.parent)
+			return;
+		this.updatePos();
+		this._model.update();
+	}
+	updatePos() {
+		//await sleep(this._refreshRate);
+		this.position.x = -0.3 * this._playerController.getForward().x + 0.5 * this._playerController.getRight().x;
+		this.position.z = -0.3 * this._playerController.getForward().z + 0.5 * this._playerController.getRight().z;
+		this._model.position.copy(this.position);
+	}
+};
 
 export class ZombieSpawner extends Component {
 

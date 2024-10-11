@@ -1,7 +1,6 @@
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { InputManager } from './input.js';
-import { Level, GameObject, BasicShape, PlayerController, SpawnerManager, ZombieSpawner } from "./components.js";
+import { Level, GameObject, BasicShape, PlayerController, SpawnerManager, ZombieSpawner, PlayerGun } from "./components.js";
 import { WIN_WIDTH, WIN_HEIGHT } from "./constants.js"
 import { ModelManager } from './utils.js';
 
@@ -26,6 +25,7 @@ function makeMainLevel(scene, inputManager, camera) {
 
 	const player = new GameObject("Player");
 	player.add(new PlayerController(inputManager, camera));
+	player.add(new PlayerGun());
 	player.position.y = 1;
 
 	const spawner = new GameObject("SpawnerManager");
@@ -43,7 +43,7 @@ function makeMainLevel(scene, inputManager, camera) {
 }
 
 
-function main() {
+async function main() {
 	const scene = new THREE.Scene();
 	const camera = new THREE.PerspectiveCamera(90, WIN_WIDTH / WIN_HEIGHT, 0.1, 1000.0);
 	const renderer = new THREE.WebGLRenderer({antialias: true});
@@ -51,8 +51,9 @@ function main() {
 	/* Models initialization */
 
 	ModelManager.INSTANCE.pushModelInfo("test", "../models/test.glb");
+	ModelManager.INSTANCE.pushModelInfo("gun", "../models/gun.glb");
 
-	ModelManager.INSTANCE.loadModels();
+	await ModelManager.INSTANCE.loadModels();
 
 	/* --------------------- */
 
