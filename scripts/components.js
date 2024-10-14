@@ -260,6 +260,7 @@ export class PlayerController extends Component {
 		this._input = input_manager;
 		this._camera = camera;
 		this._moveSpeed = 4.0;
+		this._walkTimeBuffer = 0;
 		this._score = 0;
 	}
 
@@ -300,19 +301,31 @@ export class PlayerController extends Component {
 		if (this.input.pressed("up")) {
 			this.parent.position.x += -this.getForward().x * this._moveSpeed * dt;
 			this.parent.position.z += -this.getForward().z * this._moveSpeed * dt;
+			this._walkTimeBuffer += dt / 2;
 		}
 		else if (this.input.pressed("down")) {
 			this.parent.position.x += this.getForward().x * this._moveSpeed * dt;
 			this.parent.position.z += this.getForward().z * this._moveSpeed * dt;
+			this._walkTimeBuffer += dt;
 		}
 		else if (this.input.pressed("right")) {
 			this.parent.position.x += this.getRight().x * this._moveSpeed * dt;
 			this.parent.position.z += this.getRight().z * this._moveSpeed * dt;
+			this._walkTimeBuffer += dt;
 		}
 		else if (this.input.pressed("left")) {
 			this.parent.position.x += -this.getRight().x * this._moveSpeed * dt;
 			this.parent.position.z += -this.getRight().z * this._moveSpeed * dt;
+			this._walkTimeBuffer += dt;
 		}
+		else {
+			if (this._walkTimeBuffer < 0)
+				this._walkTimeBuffer = 0;
+			else
+				this._walkTimeBuffer -= dt * 2;
+		}
+			
+		this.camera.rotation.x = Math.sin(this._walkTimeBuffer * 4) * Math.PI / 320;
 		this.camera.position.copy(this.parent.position);
 		this.parent.rotation.copy(this.camera.rotation);
 	}

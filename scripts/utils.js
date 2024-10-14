@@ -33,6 +33,7 @@ export class ModelManager {
 		let loadingError = false;
 		let errorMsg = "";
 		let modelsAmount = this._modelsToLoad.length;
+		LOG_INFO("Models loading started!");
 		if (modelsAmount > 0) {
 			for (let modelInfo of this._modelsToLoad) {
 				this.loader.load(modelInfo.path,
@@ -59,7 +60,7 @@ export class ModelManager {
 
 	getModel(name) {
 		if (name in this.models) {
-			return {scene: this.models[name].scene.clone(), animations: this.models[name].animations};
+			return { scene: this.models[name].scene.clone(), animations: this.models[name].animations };
 		}
 		return undefined;
 	}
@@ -94,10 +95,15 @@ export class TextureManager {
 		let loadingError = false;
 		let errorMsg = "";
 		let texturesAmount = this._texturesToLoad.length;
+		LOG_INFO("Textures loading started!");
 		if (texturesAmount > 0) {
 			for (let textureInfo of this._texturesToLoad) {
 				this.loader.load(textureInfo.path,
-					texture => { this.addTexture(textureInfo.name, texture), texturesLoaded++; },
+					texture => {
+						this.addTexture(textureInfo.name, texture);
+						texturesLoaded++;
+						LOG_DEBUG("Texture " + textureInfo.name + " is loaded!");
+					},
 					xhr => LOG_DEBUG(textureInfo.name + " texture is loading : " + xhr.loaded / xhr.total * 100 + " / 100%"),
 					err => { loadingError = true; errorMsg = err; }
 				);

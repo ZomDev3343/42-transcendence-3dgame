@@ -3,6 +3,7 @@ import { InputManager } from './input.js';
 import { Level, GameObject, BasicShape, PlayerController, SpawnerManager, ZombieSpawner, PlayerGun } from "./components.js";
 import { WIN_WIDTH, WIN_HEIGHT } from "./constants.js"
 import { ModelManager, TextureManager,  } from './utils.js';
+import { LOG_DEBUG } from './game_logger.js';
 
 /**
  *
@@ -50,7 +51,8 @@ async function main() {
 
 	/* Textures initialization */
 
-	TextureManager.INSTANCE.pushTextureInfo("ground", "../textures/ground.jpg");
+	TextureManager.INSTANCE.pushTextureInfo("hitmarker", "../textures/hitmarker.png");
+	TextureManager.INSTANCE.pushTextureInfo("target", "../textures/target.png");
 
 	await TextureManager.INSTANCE.loadTextures();
 	
