@@ -3,6 +3,7 @@ import { LOG_DEBUG, LOG_ERROR, LOG_WARNING } from './game_logger.js';
 import { generateUUID } from 'three/src/math/MathUtils.js';
 import { makeZombie } from './maker.js';
 import { ModelManager, sleep } from './utils.js';
+import { FirstPersonControls } from 'three/examples/jsm/Addons.js';
 
 export class Component {
 	constructor(parent, scene) {
