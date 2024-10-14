@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { InputManager } from './input.js';
 import { Level, GameObject, BasicShape, PlayerController, SpawnerManager, ZombieSpawner, PlayerGun } from "./components.js";
 import { WIN_WIDTH, WIN_HEIGHT } from "./constants.js"
-import { ModelManager } from './utils.js';
+import { ModelManager, TextureManager,  } from './utils.js';
 
 /**
  *
@@ -15,7 +15,7 @@ function makeMainLevel(scene, inputManager, camera) {
 	const level = new Level(scene);
 
 	const groundPlatform = new GameObject("Ground");
-	groundPlatform.add(new BasicShape(new THREE.BoxGeometry(15, 1, 15), new THREE.MeshPhongMaterial({ color: 0xffffff })));
+	groundPlatform.add(new BasicShape(new THREE.BoxGeometry(60, 1, 60), new THREE.MeshBasicMaterial({ color: 0x654005 })));
 
 
 	const cube = new GameObject("Cube");
@@ -48,6 +48,14 @@ async function main() {
 	const camera = new THREE.PerspectiveCamera(90, WIN_WIDTH / WIN_HEIGHT, 0.1, 1000.0);
 	const renderer = new THREE.WebGLRenderer({antialias: true});
 
+	/* Textures initialization */
+
+	TextureManager.INSTANCE.pushTextureInfo("ground", "../textures/ground.jpg");
+
+	await TextureManager.INSTANCE.loadTextures();
+	
+	/* ----------------------- */
+	
 	/* Models initialization */
 
 	ModelManager.INSTANCE.pushModelInfo("test", "../models/test.glb");
