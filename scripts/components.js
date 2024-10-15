@@ -3,7 +3,6 @@ import { LOG_DEBUG, LOG_ERROR, LOG_WARNING } from './game_logger.js';
 import { generateUUID } from 'three/src/math/MathUtils.js';
 import { makeZombie } from './maker.js';
 import { ModelManager, sleep } from './utils.js';
-import { FirstPersonControls } from 'three/examples/jsm/Addons.js';
 
 export class Component {
 	constructor(parent, scene) {
@@ -263,6 +262,23 @@ export class PlayerController extends Component {
 		this._moveSpeed = 4.0;
 		this._walkTimeBuffer = 0;
 		this._score = 0;
+		this._mouseX = 0;
+
+		window.addEventListener("mousemove", (ev) => {
+			if (this.input.clicked(0)) {
+				ev.preventDefault();
+
+				let dX = ev.clientX - this._mouseX;
+				this._mouseX = ev.clientX;
+				this.camera.rotation.y += -dX / 100;
+			}
+			LOG_DEBUG("MouseX: " + ev.clientX / 1280);
+		});
+
+		window.addEventListener("mousedown", (ev) => {
+			if (ev.button == 0)
+				this._mouseX = ev.clientX;
+		});
 	}
 
 	get input() { return this._input; }
@@ -320,10 +336,10 @@ export class PlayerController extends Component {
 			this._walkTimeBuffer += dt;
 		}
 		else {
-			if (this._walkTimeBuffer < 0)
+			if (this._walkTimeBuffer <= 0)
 				this._walkTimeBuffer = 0;
 			else
-				this._walkTimeBuffer -= dt * 2;
+				this._walkTimeBuffer -= dt * 4;
 		}
 			
 		this.camera.rotation.x = Math.sin(this._walkTimeBuffer * 4) * Math.PI / 320;
@@ -511,7 +527,6 @@ export class PlayerGun extends Component {
 		this._model.anim.addPose("reload");
 		this._model.anim.addPose("shoot");
 		this._model.anim.compileAnims();
-		LOG_DEBUG(this._model.anim._anims);
 		for (let anim in this._model.anim.anims) {
 			this._model.anim.anims[anim].repetitions = 1;
 		}
@@ -537,7 +552,7 @@ export class PlayerGun extends Component {
 			this.reload();
 		if (this._hasShot === false && this._isReloading === false
 			&& this._mag > 0
-			&& this._input.justClicked(0) === true)
+			&& this._input.justPressed("shoot") === true)
 			this.shoot();
 		this.updatePos();
 		this._model.update(dt);

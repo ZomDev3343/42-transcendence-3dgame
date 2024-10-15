@@ -20,6 +20,7 @@ class InputManager {
 		this.#add_key("ArrowLeft", "look_left", true);
 		this.#add_key("ArrowRight", "look_right", true);
 		this.#add_key("e", "use");
+		this.#add_key(" ", "shoot");
 		this.#add_key("r", "reload");
 
 		window.addEventListener("mousedown", (ev) => {
@@ -69,7 +70,7 @@ class InputManager {
 		};
 
 		let upCallback = ev => {
-			if (ev.key == keycode && !ev.repeat) {
+			if (ev.key == keycode) {
 				this._pressed[keyname] = false;
 				this._justPressed[keyname] = false;
 			}
