@@ -5,12 +5,16 @@ import { GameObject, ZombieAI, ZombieModel } from "./components";
  * @param {Vector3} pos 
  * @returns {GameObject} Zombie game object
  */
-export function makeZombie(pos) {
+export function makeZombie(pos, round) {
 	let zomb = new GameObject("Zombie");
+	let ai = new ZombieAI();
 	zomb.position.copy(pos);
 	zomb.position.y = 1.3;
-	zomb.add(new ZombieAI());
+
+	ai._health = 2 + round;
+	zomb.add(ai);
 	zomb.add(new ZombieModel());
+	zomb.getComponent(ZombieModel).gltf.scene.children[0].zombie = zomb;
 	zomb.objUpdate = (_) => {
 		zomb.getComponent(ZombieModel)._rotation = zomb.rotation;
 	};

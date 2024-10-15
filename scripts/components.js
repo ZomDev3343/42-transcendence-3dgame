@@ -272,7 +272,6 @@ export class PlayerController extends Component {
 				this._mouseX = ev.clientX;
 				this.camera.rotation.y += -dX / 100;
 			}
-			LOG_DEBUG("MouseX: " + ev.clientX / 1280);
 		});
 
 		window.addEventListener("mousedown", (ev) => {
@@ -309,12 +308,6 @@ export class PlayerController extends Component {
 	update(dt) {
 		if (!parent)
 			return;
-		if (this.input.pressed("look_left")) {
-			this.camera.rotation.y += (Math.PI) * dt;
-		}
-		else if (this.input.pressed("look_right")) {
-			this.camera.rotation.y += -(Math.PI) * dt;
-		}
 		if (this.input.pressed("up")) {
 			this.parent.position.x += -this.getForward().x * this._moveSpeed * dt;
 			this.parent.position.z += -this.getForward().z * this._moveSpeed * dt;
@@ -355,6 +348,7 @@ export class ZombieAI extends Component {
 		this._velY = 0;
 		this._moveSpeed = 1.0;
 		this._refreshPeriod = 1000 / 60;
+		this._health = 2;
 		this._isRefreshing = false;
 		this._directionHelper = new THREE.ArrowHelper();
 	}
@@ -394,6 +388,15 @@ export class ZombieAI extends Component {
 			this._isRefreshing = false;
 		}
 	}
+	takeDamage(dmg) {
+		if (this._health - dmg <= 0) {
+			// Death animation
+			this.getLevel().remove(this.parent);
+			LOG_DEBUG("Zombie died!");
+		}
+		else
+			this._health -= dmg;
+	}
 };
 
 export class SpawnerManager extends Component {
@@ -423,6 +426,7 @@ export class SpawnerManager extends Component {
 			if (spawner instanceof ZombieSpawner) {
 				await sleep(1000 + Math.random() * 1500);
 				spawner._leftToSpawn = 3 + (2 * (this._round - 1));
+				spawner._round = this._round;
 				spawner.spawn();
 			}
 		}
@@ -519,7 +523,7 @@ export class PlayerGun extends Component {
 		this._isReloading = false;
 		this._magCapacity = magCapacity;
 		this._mag = magCapacity;
-		this._shootRange = 10;
+		this._shootRange = 30;
 		this._isRefreshing = false;
 		this._playerController = null;
 		this._dmg = 1;
@@ -573,7 +577,8 @@ export class PlayerGun extends Component {
 		LOG_DEBUG("Current munitions : " + this._mag);
 		// Play fire sound
 		await sleep(50);
-		for (let zombie of this.getLevel().findAll("Zombie")) {
+		const zombies = this.getLevel().findAll("Zombie");
+		for (let zombie of zombies) {
 			if (zombie.name === "Zombie") {
 				zombiesObjs.push(zombie.getComponent(ZombieModel).gltf.scene);
 			}
@@ -583,9 +588,7 @@ export class PlayerGun extends Component {
 			const touched = ray.intersectObjects(zombiesObjs);
 			LOG_DEBUG("Got all zombies");
 			if (touched.length > 0) {
-				LOG_DEBUG("First touched distance : " + touched[0].distance);
-				if (touched.length > 1)
-					LOG_DEBUG("Second touched distance : " + touched[1].distance);
+				touched[0].object.zombie.getComponent(ZombieAI).takeDamage(this._dmg);
 				// Play hit marker sound
 			}
 		}
@@ -614,6 +617,7 @@ export class ZombieSpawner extends Component {
 		this.position.copy(pos);
 		this.position.y = 1;
 		this._manager = null;
+		this._round = 0;
 		this._spawnRate = 5;
 		this._leftToSpawn = 3;
 		this._spawnRange = 8;
@@ -627,7 +631,7 @@ export class ZombieSpawner extends Component {
 
 			spawnPos.x += Math.random() * 2;
 			spawnPos.y = 1.5;
-			let zomb = makeZombie(spawnPos);
+			let zomb = makeZombie(spawnPos, this._round);
 			this.getLevel().add(zomb);
 			this._leftToSpawn--;
 
