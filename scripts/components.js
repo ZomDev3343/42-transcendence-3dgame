@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import { LOG_DEBUG, LOG_ERROR, LOG_WARNING } from './game_logger.js';
 import { generateUUID } from 'three/src/math/MathUtils.js';
 import { makeZombie } from './maker.js';
-import { ModelManager, sleep } from './utils.js';
+import { ModelManager, sleep, TextureManager } from './utils.js';
 
 export class Component {
 	constructor(parent, scene) {
@@ -129,9 +129,9 @@ export class GameObject extends Component {
 			LOG_ERROR("Can't add non-component to %s gameobject!", this.name);
 	}
 	/**
-	 * 
-	 * @param {Component} type 
-	 * @returns 
+	 *
+	 * @param {Component} type
+	 * @returns
 	 */
 	getComponent(type) {
 		for (let comp of this.components) {
@@ -263,6 +263,13 @@ export class PlayerController extends Component {
 		this._walkTimeBuffer = 0;
 		this._score = 0;
 		this._mouseX = 0;
+		this._targetSprite = new THREE.Sprite(new THREE.SpriteMaterial({map: TextureManager.INSTANCE.getTexture("target")}));
+		this._targetSprite.scale.multiplyScalar(0.02);
+		this._targetSprite.position.y = 1;
+		this._hitmarkerSprite = new THREE.Sprite(new THREE.SpriteMaterial({map: TextureManager.INSTANCE.getTexture("hitmarker")}));
+		this._hitmarkerSprite.scale.multiplyScalar(0.05);
+		this._hitmarkerSprite.position.y = 1;
+		this._hitmarkerSprite.visible = false;
 
 		window.addEventListener("mousemove", (ev) => {
 			if (this.input.clicked(0)) {
@@ -332,12 +339,23 @@ export class PlayerController extends Component {
 			if (this._walkTimeBuffer <= 0)
 				this._walkTimeBuffer = 0;
 			else
-				this._walkTimeBuffer -= dt * 4;
+				this._walkTimeBuffer -= dt * 2;
 		}
-			
+		if (this._walkTimeBuffer >= Math.PI / 2)
+			this._walkTimeBuffer = 0;
+
 		this.camera.rotation.x = Math.sin(this._walkTimeBuffer * 4) * Math.PI / 320;
 		this.camera.position.copy(this.parent.position);
 		this.parent.rotation.copy(this.camera.rotation);
+		this._targetSprite.position.x = this.parent.position.x -0.5 * this.getForward().x;
+		this._targetSprite.position.z = this.parent.position.z -0.5 * this.getForward().z;
+		this._hitmarkerSprite.position.x = this.parent.position.x -0.5 * this.getForward().x;
+		this._hitmarkerSprite.position.z = this.parent.position.z -0.5 * this.getForward().z;
+	}
+
+	create() {
+		this.parent.scene.add(this._targetSprite);
+		this.parent.scene.add(this._hitmarkerSprite);
 	}
 };
 
@@ -589,12 +607,18 @@ export class PlayerGun extends Component {
 			LOG_DEBUG("Got all zombies");
 			if (touched.length > 0) {
 				touched[0].object.zombie.getComponent(ZombieAI).takeDamage(this._dmg);
+				this.showHitmarker();
 				// Play hit marker sound
 			}
 		}
-		
+
 		await sleep(this._shootDelay);
 		this._hasShot = false;
+	}
+	async showHitmarker() {
+		this._playerController._hitmarkerSprite.visible = true;
+		await sleep(80);
+		this._playerController._hitmarkerSprite.visible = false;
 	}
 	async reload() {
 		this._isReloading = true;
@@ -610,7 +634,7 @@ export class ZombieSpawner extends Component {
 	static spawnerID = 0;
 
 	/**
-	 * @param {THREE.Vector3} pos 
+	 * @param {THREE.Vector3} pos
 	 */
 	constructor(pos) {
 		super("ZombieSpawner" + ZombieSpawner.spawnerID++);

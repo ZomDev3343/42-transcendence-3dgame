@@ -55,9 +55,9 @@ async function main() {
 	TextureManager.INSTANCE.pushTextureInfo("target", "../textures/target.png");
 
 	await TextureManager.INSTANCE.loadTextures();
-	
+
 	/* ----------------------- */
-	
+
 	/* Models initialization */
 
 	ModelManager.INSTANCE.pushModelInfo("test", "../models/test.glb");
@@ -79,15 +79,16 @@ async function main() {
 	document.body.appendChild(renderer.domElement);
 
 	camera.position.z = 5;
+	camera.updateProjectionMatrix();
 
 	function animationLoop() {
 		level.create();
 		level.update();
-		camera.updateProjectionMatrix();
 		renderer.render(scene, camera);
 		if (input.justPressed("use")) {
 			level.find("SpawnerManager").getComponent(SpawnerManager).startRound();
 		}
+
 	}
 	renderer.setAnimationLoop(animationLoop);
 }
