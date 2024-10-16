@@ -360,6 +360,11 @@ export class PlayerController extends Component {
 		this.parent.scene.add(this._hitmarkerSprite);
 		this.parent.scene.add(this._audioListener);
 	}
+	remove() {
+		this.parent.scene.remove(this._targetSprite);
+		this.parent.scene.remove(this._hitmarkerSprite);
+		this.parent.scene.remove(this._audioListener);
+	}
 };
 
 export class ZombieAI extends Component {
@@ -381,12 +386,10 @@ export class ZombieAI extends Component {
 		);
 	}
 	create() {
-		super.create();
 		this._directionHelper.position.copy(this.parent.position);
 		this.parent.scene.add(this._directionHelper);
 	}
 	remove() {
-		super.remove();
 		this.parent.scene.remove(this._directionHelper);
 	}
 	update(dt) {
@@ -667,5 +670,17 @@ export class ZombieSpawner extends Component {
 			await sleep(this._spawnRate * 1000);
 			this.spawn();
 		}
+	}
+};
+
+export class MysteryBoxComp extends Component {
+	constructor() {
+
+	}
+	create() {
+
+	}
+	update(dt) {
+
 	}
 };

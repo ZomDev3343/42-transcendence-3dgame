@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { InputManager } from './input.js';
-import { Level, GameObject, BasicShape, PlayerController, SpawnerManager, ZombieSpawner, PlayerGun } from "./components.js";
+import { Level, GameObject, BasicShape, PlayerController, SpawnerManager, ZombieSpawner, PlayerGun, AnimatedModel, MysteryBoxComp } from "./components.js";
 import { WIN_WIDTH, WIN_HEIGHT } from "./constants.js"
 import { AudioManager, ModelManager, TextureManager,  } from './utils.js';
 import { LOG_DEBUG } from './game_logger.js';
@@ -19,10 +19,9 @@ function makeMainLevel(scene, inputManager, camera) {
 	groundPlatform.add(new BasicShape(new THREE.BoxGeometry(60, 1, 60), new THREE.MeshBasicMaterial({ color: 0x654005 })));
 
 
-	const cube = new GameObject("Cube");
-	cube.add(new BasicShape(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshPhongMaterial({ color: 0xffff00 })));
-	cube.position.y = 2;
-	cube.position.x = 1;
+	const mysteryBox = new GameObject("MysteryBox");
+	mysteryBox.add(new AnimatedModel(ModelManager.INSTANCE.getModel("box")));
+	mysteryBox.add(new MysteryBoxComp());
 
 	const player = new GameObject("Player");
 	player.add(new PlayerController(inputManager, camera));
@@ -39,6 +38,7 @@ function makeMainLevel(scene, inputManager, camera) {
 	level.add(cube);
 	level.add(player);
 	level.add(spawner);
+	level.add(mysteryBox);
 
 	return level;
 }
