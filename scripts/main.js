@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { InputManager } from './input.js';
 import { Level, GameObject, BasicShape, PlayerController, SpawnerManager, ZombieSpawner, PlayerGun } from "./components.js";
 import { WIN_WIDTH, WIN_HEIGHT } from "./constants.js"
-import { ModelManager, TextureManager,  } from './utils.js';
+import { AudioManager, ModelManager, TextureManager,  } from './utils.js';
 import { LOG_DEBUG } from './game_logger.js';
 
 /**
@@ -45,6 +45,7 @@ function makeMainLevel(scene, inputManager, camera) {
 
 
 async function main() {
+	const audioContext = new AudioContext();
 	const scene = new THREE.Scene();
 	const camera = new THREE.PerspectiveCamera(90, WIN_WIDTH / WIN_HEIGHT, 0.1, 1000.0);
 	const renderer = new THREE.WebGLRenderer({antialias: true});
@@ -67,10 +68,19 @@ async function main() {
 
 	/* --------------------- */
 
+
+	/* Sounds Initialization */
+
+	await AudioManager.INSTANCE.loadSounds();
+
+	/* --------------------- */
+
+
+
 	renderer.setPixelRatio(window.devicePixelRatio);
 	renderer.shadowMap.enabled = true;
 	renderer.outputEncoding = THREE.sRGBEncoding;
-	const input = new InputManager();
+	const input = new InputManager(audioContext);
 	const level = makeMainLevel(scene, input, camera);
 	camera.position.y = 1;
 

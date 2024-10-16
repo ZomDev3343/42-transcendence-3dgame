@@ -1,7 +1,7 @@
 import { WIN_HEIGHT, WIN_WIDTH } from "./constants";
 
 class InputManager {
-	constructor() {
+	constructor(audioContext) {
 		this.keymap = {};
 		this._pressed = {};
 		this._justPressed = {};
@@ -10,6 +10,7 @@ class InputManager {
 		this._keyListeners = { "keydown": [], "keyup": [] };
 		this.mouseX = 0;
 		this.mouseY = 0;
+		this._audioContext = audioContext;
 		this.#init();
 	}
 	#init() {
@@ -24,6 +25,7 @@ class InputManager {
 		this.#add_key("r", "reload");
 
 		window.addEventListener("mousedown", (ev) => {
+			this._audioContext.resume();
 			this._clicked[ev.button] = true;
 		});
 		window.addEventListener("mouseup", (ev) => {

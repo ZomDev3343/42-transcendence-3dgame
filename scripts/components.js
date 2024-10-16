@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import { LOG_DEBUG, LOG_ERROR, LOG_WARNING } from './game_logger.js';
 import { generateUUID } from 'three/src/math/MathUtils.js';
 import { makeZombie } from './maker.js';
-import { ModelManager, sleep, TextureManager } from './utils.js';
+import { AudioManager, ModelManager, sleep, TextureManager } from './utils.js';
 
 export class Component {
 	constructor(parent, scene) {
@@ -270,6 +270,7 @@ export class PlayerController extends Component {
 		this._hitmarkerSprite.scale.multiplyScalar(0.05);
 		this._hitmarkerSprite.position.y = 1;
 		this._hitmarkerSprite.visible = false;
+		this._audioListener = new THREE.AudioListener();
 
 		window.addEventListener("mousemove", (ev) => {
 			if (this.input.clicked(0)) {
@@ -351,11 +352,13 @@ export class PlayerController extends Component {
 		this._targetSprite.position.z = this.parent.position.z -0.5 * this.getForward().z;
 		this._hitmarkerSprite.position.x = this.parent.position.x -0.5 * this.getForward().x;
 		this._hitmarkerSprite.position.z = this.parent.position.z -0.5 * this.getForward().z;
+		this._audioListener.position.copy(this.parent.position);
 	}
 
 	create() {
 		this.parent.scene.add(this._targetSprite);
 		this.parent.scene.add(this._hitmarkerSprite);
+		this.parent.scene.add(this._audioListener);
 	}
 };
 
@@ -549,6 +552,7 @@ export class PlayerGun extends Component {
 		this._model.anim.addPose("reload");
 		this._model.anim.addPose("shoot");
 		this._model.anim.compileAnims();
+		this._weaponSound = "gunFire";
 		for (let anim in this._model.anim.anims) {
 			this._model.anim.anims[anim].repetitions = 1;
 		}
@@ -589,11 +593,12 @@ export class PlayerGun extends Component {
 		const startPos = this._playerController.camera.position.clone();
 		const ray = new THREE.Raycaster(startPos, this._playerController.getForward().multiplyScalar(-1).normalize(), 0.1, this._shootRange);
 		const zombiesObjs = [];
-		this.parent.scene.add(new THREE.ArrowHelper(this._playerController.getForward().multiplyScalar(-1).normalize(), this._playerController.camera.position));
+		//this.parent.scene.add(new THREE.ArrowHelper(this._playerController.getForward().multiplyScalar(-1).normalize(), this._playerController.camera.position));
 		this._model.anim.playAnim("shoot");
 		this._mag--;
 		LOG_DEBUG("Current munitions : " + this._mag);
 		// Play fire sound
+		AudioManager.INSTANCE.playSound(this._weaponSound);
 		await sleep(50);
 		const zombies = this.getLevel().findAll("Zombie");
 		for (let zombie of zombies) {
@@ -608,10 +613,10 @@ export class PlayerGun extends Component {
 			if (touched.length > 0) {
 				touched[0].object.zombie.getComponent(ZombieAI).takeDamage(this._dmg);
 				this.showHitmarker();
+				AudioManager.INSTANCE.playSound("hit");
 				// Play hit marker sound
 			}
 		}
-
 		await sleep(this._shootDelay);
 		this._hasShot = false;
 	}

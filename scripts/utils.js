@@ -1,4 +1,4 @@
-import { TextureLoader } from 'three';
+import { Audio, AudioLoader, TextureLoader } from 'three';
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { LOG_DEBUG, LOG_ERROR, LOG_INFO, LOG_WARNING } from "./game_logger";
 
@@ -129,6 +129,79 @@ export class TextureManager {
 			return this.textures[name].clone();
 		}
 		return undefined;
+	}
+
+	get loader() { return this._loader; }
+};
+
+export class AudioManager {
+	constructor(loader) {
+		this._loader = loader;
+		this._soundsToLoad = [];
+		this._sounds = {};
+	}
+
+	static INSTANCE = new AudioManager(new AudioLoader());
+
+	get sounds() { return this._sounds; }
+	set sounds(_) { }
+
+	get loader() { return this._loader; }
+
+	pushSoundInfo(soundName, soundPath) {
+		this._soundsToLoad.push({ name: soundName, path: soundPath });
+	}
+
+	addSound(soundName, sound) {
+		this.sounds[soundName] = sound;
+	}
+
+	async loadSounds() {
+		let soundsLoaded = 0;
+		let loadingError = false;
+		let errorMsg = "";
+		let soundsAmount = this._soundsToLoad.length;
+		LOG_INFO("Sounds loading started!");
+		if (soundsAmount > 0) {
+			for (let soundInfo of this._soundsToLoad) {
+				this.loader.load(soundInfo.path,
+					buffer => {
+						this.addSound(soundInfo.name, buffer);
+						soundsLoaded++;
+						LOG_DEBUG("Sound " + soundInfo.name + " is loaded!");
+					},
+					xhr => LOG_DEBUG(soundInfo.name + " sound is loading : " + xhr.loaded / xhr.total * 100 + " / 100%"),
+					err => { loadingError = true; errorMsg = err; }
+				);
+			}
+		}
+		await new Promise(res => {
+			const interID = setInterval(() => {
+				if (soundsLoaded === soundsAmount || loadingError === true) {
+					clearInterval(interID);
+					res();
+				}
+			}, 50);
+		});
+		this._soundsToLoad.length = 0;
+		if (loadingError === true)
+			LOG_WARNING("Error while loading some sounds! " + errorMsg);
+		else
+			LOG_INFO("All the sounds loaded successfully!");
+	}
+
+	playSound(name, listener, loop) {
+		if (name in this._sounds) {
+			const audio = new Audio(listener);
+			audio.setBuffer(this.getBuffer(name));
+			audio.setLoop(loop);
+			audio.setVolume(0.3);
+			audio.play();
+		}
+	}
+
+	getBuffer(name) {
+		return this.sounds[name];
 	}
 
 	get loader() { return this._loader; }
