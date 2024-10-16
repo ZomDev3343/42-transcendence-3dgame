@@ -417,9 +417,12 @@ export class ZombieAI extends Component {
 			// Death animation
 			this.getLevel().remove(this.parent);
 			LOG_DEBUG("Zombie died!");
+			return true;
 		}
-		else
+		else {
 			this._health -= dmg;
+			return false;
+		}
 	}
 };
 
@@ -614,7 +617,9 @@ export class PlayerGun extends Component {
 			const touched = ray.intersectObjects(zombiesObjs);
 			LOG_DEBUG("Got all zombies");
 			if (touched.length > 0) {
-				touched[0].object.zombie.getComponent(ZombieAI).takeDamage(this._dmg);
+				if (touched[0].object.zombie.getComponent(ZombieAI).takeDamage(this._dmg))
+					this._playerController._score += 50;
+				this._playerController._score += 10;
 				this.showHitmarker();
 				AudioManager.INSTANCE.playSound("hit");
 				// Play hit marker sound
@@ -675,12 +680,34 @@ export class ZombieSpawner extends Component {
 
 export class MysteryBoxComp extends Component {
 	constructor() {
-
+		this._loot = {
+			"gun": 0.35,
+			"rifle": 0.25,
+			"rpg": 0.20,
+			"laser": 0.10,
+			"danceBomb": 0.10
+		};
+		this._model = null;
+		this._opened = false;
 	}
 	create() {
 
 	}
-	update(dt) {
-
+	async open() {
+		if (this._opened)
+			return ;
+		let weight = 0;
+		let rand = Math.random();
+		let lootWeapon;
+		this._opened = true;
+		for (let m of this._loot) {
+			weight += this._loot[m];
+			if (weight >= rand) {
+				lootWeapon = new AnimatedModel(ModelManager.INSTANCE.getModel(m));
+			}
+		}
+		lootWeapon.position.y = 1.4;
+		// TODO animation de l'arme qui sort de la boite
+		this._opened = false;
 	}
 };
