@@ -20,8 +20,10 @@ function makeMainLevel(scene, inputManager, camera) {
 
 
 	const mysteryBox = new GameObject("MysteryBox");
-	mysteryBox.add(new AnimatedModel(ModelManager.INSTANCE.getModel("box")));
 	mysteryBox.add(new MysteryBoxComp());
+	mysteryBox.position.y = 0.65;
+	mysteryBox.scale.copy(new THREE.Vector3(0.25, 0.25, 0.25));
+	mysteryBox.position.copy(new THREE.Vector3(3, 0.75, 10));
 
 	const player = new GameObject("Player");
 	player.add(new PlayerController(inputManager, camera));
@@ -35,7 +37,6 @@ function makeMainLevel(scene, inputManager, camera) {
 	spawner.getComponent(SpawnerManager).addSpawner(new ZombieSpawner(spawner.position.add({ x: 5, y: 0, z: 5 })));
 
 	level.add(groundPlatform);
-	level.add(cube);
 	level.add(player);
 	level.add(spawner);
 	level.add(mysteryBox);
@@ -63,6 +64,7 @@ async function main() {
 
 	ModelManager.INSTANCE.pushModelInfo("test", "../models/test.glb");
 	ModelManager.INSTANCE.pushModelInfo("gun", "../models/gun.glb");
+	ModelManager.INSTANCE.pushModelInfo("box", "../models/box.glb");
 
 	await ModelManager.INSTANCE.loadModels();
 
@@ -96,7 +98,7 @@ async function main() {
 		level.update();
 		renderer.render(scene, camera);
 		if (input.justPressed("use")) {
-			level.find("SpawnerManager").getComponent(SpawnerManager).startRound();
+			level.find("MysteryBox").getComponent(MysteryBoxComp).open();
 		}
 
 	}

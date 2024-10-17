@@ -680,18 +680,26 @@ export class ZombieSpawner extends Component {
 
 export class MysteryBoxComp extends Component {
 	constructor() {
+		super(null, null);
 		this._loot = {
-			"gun": 0.35,
-			"rifle": 0.25,
-			"rpg": 0.20,
-			"laser": 0.10,
-			"danceBomb": 0.10
+			"gun": 1
+			// "rifle": 0.25,
+			// "rpg": 0.20,
+			// "laser": 0.10,
+			// "danceBomb": 0.10
 		};
-		this._model = null;
+		this._model = new AnimatedModel(ModelManager.INSTANCE.getModel("box"));
 		this._opened = false;
 	}
 	create() {
-
+		this.parent.scene.add(this._model.gltf.scene);
+	}
+	remove() {
+		this.parent.scene.remove(this._model.gltf.scene);
+	}
+	update(_) {
+		this._model.gltf.scene.scale.copy(this.parent.scale);
+		this._model.gltf.scene.position.copy(this.parent.position);
 	}
 	async open() {
 		if (this._opened)
@@ -700,13 +708,20 @@ export class MysteryBoxComp extends Component {
 		let rand = Math.random();
 		let lootWeapon;
 		this._opened = true;
-		for (let m of this._loot) {
+		for (let m in this._loot) {
 			weight += this._loot[m];
 			if (weight >= rand) {
+				LOG_DEBUG("Weapon from the box : " + m);
 				lootWeapon = new AnimatedModel(ModelManager.INSTANCE.getModel(m));
+				lootWeapon.parent = this.parent;
+				break;
 			}
 		}
-		lootWeapon.position.y = 1.4;
+		lootWeapon.gltf.scene.position.copy(this.parent.position);
+		lootWeapon.gltf.scene.position.y = 1.5;
+		lootWeapon.gltf.scene.rotation.y = Math.PI / 2;
+		lootWeapon.gltf.scene.scale.copy(new THREE.Vector3(0.25, 0.25, 0.25));
+		this.parent.scene.add(lootWeapon.gltf.scene);
 		// TODO animation de l'arme qui sort de la boite
 		this._opened = false;
 	}
