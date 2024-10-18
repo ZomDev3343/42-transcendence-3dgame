@@ -5,9 +5,9 @@ import { GameObject, ZombieAI, ZombieModel } from "./components";
  * @param {Vector3} pos 
  * @returns {GameObject} Zombie game object
  */
-export function makeZombie(pos, round) {
+export function makeZombie(pos, round, spawner) {
 	let zomb = new GameObject("Zombie");
-	let ai = new ZombieAI();
+	let ai = new ZombieAI(spawner);
 	zomb.position.copy(pos);
 	zomb.position.y = 1.3;
 

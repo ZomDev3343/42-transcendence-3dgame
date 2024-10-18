@@ -3,6 +3,7 @@ import { LOG_DEBUG, LOG_ERROR, LOG_WARNING } from './game_logger.js';
 import { generateUUID } from 'three/src/math/MathUtils.js';
 import { makeZombie } from './maker.js';
 import { AudioManager, ModelManager, sleep, TextureManager } from './utils.js';
+import { tslFn } from 'three/webgpu';
 
 export class Component {
 	constructor(parent, scene) {
@@ -263,10 +264,10 @@ export class PlayerController extends Component {
 		this._walkTimeBuffer = 0;
 		this._score = 0;
 		this._mouseX = 0;
-		this._targetSprite = new THREE.Sprite(new THREE.SpriteMaterial({map: TextureManager.INSTANCE.getTexture("target")}));
+		this._targetSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: TextureManager.INSTANCE.getTexture("target") }));
 		this._targetSprite.scale.multiplyScalar(0.02);
 		this._targetSprite.position.y = 1;
-		this._hitmarkerSprite = new THREE.Sprite(new THREE.SpriteMaterial({map: TextureManager.INSTANCE.getTexture("hitmarker")}));
+		this._hitmarkerSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: TextureManager.INSTANCE.getTexture("hitmarker") }));
 		this._hitmarkerSprite.scale.multiplyScalar(0.05);
 		this._hitmarkerSprite.position.y = 1;
 		this._hitmarkerSprite.visible = false;
@@ -348,10 +349,10 @@ export class PlayerController extends Component {
 		this.camera.rotation.x = Math.sin(this._walkTimeBuffer * 4) * Math.PI / 320;
 		this.camera.position.copy(this.parent.position);
 		this.parent.rotation.copy(this.camera.rotation);
-		this._targetSprite.position.x = this.parent.position.x -0.5 * this.getForward().x;
-		this._targetSprite.position.z = this.parent.position.z -0.5 * this.getForward().z;
-		this._hitmarkerSprite.position.x = this.parent.position.x -0.5 * this.getForward().x;
-		this._hitmarkerSprite.position.z = this.parent.position.z -0.5 * this.getForward().z;
+		this._targetSprite.position.x = this.parent.position.x - 0.5 * this.getForward().x;
+		this._targetSprite.position.z = this.parent.position.z - 0.5 * this.getForward().z;
+		this._hitmarkerSprite.position.x = this.parent.position.x - 0.5 * this.getForward().x;
+		this._hitmarkerSprite.position.z = this.parent.position.z - 0.5 * this.getForward().z;
 		this._audioListener.position.copy(this.parent.position);
 	}
 
@@ -368,13 +369,14 @@ export class PlayerController extends Component {
 };
 
 export class ZombieAI extends Component {
-	constructor() {
+	constructor(spawner) {
 		super(null, null);
 		this._velX = 0;
 		this._velY = 0;
 		this._moveSpeed = 1.0;
 		this._refreshPeriod = 1000 / 60;
 		this._health = 2;
+		this._spawner = spawner;
 		this._isRefreshing = false;
 		this._directionHelper = new THREE.ArrowHelper();
 	}
@@ -431,6 +433,7 @@ export class SpawnerManager extends Component {
 		super(null, null);
 		this._round = 0;
 		this._roundStarted = false;
+		this._isCheckingRoundEnd = false;
 		this._spawners = [];
 	}
 	get timeBeforeRound() { if (this._round == 1) return 2; else return 8; }
@@ -445,10 +448,10 @@ export class SpawnerManager extends Component {
 			return;
 		this._round++;
 		// Show round number
-		LOG_DEBUG("Round %d is starting...", this._round)
-		await sleep(this.timeBeforeRound * 1000);
-		LOG_DEBUG("Round started %d started!", this._round);
+		LOG_DEBUG("Round " + this._round + " is starting...");
 		this._roundStarted = true;
+		await sleep(this.timeBeforeRound * 1000);
+		LOG_DEBUG("Round started " + this._round + " started!");
 		for (let spawner of this._spawners) {
 			if (spawner instanceof ZombieSpawner) {
 				await sleep(1000 + Math.random() * 1500);
@@ -457,6 +460,33 @@ export class SpawnerManager extends Component {
 				spawner.spawn();
 			}
 		}
+	}
+
+	update(_) {
+		if (this._isCheckingRoundEnd === false)
+			this.checkForRoundEnd();
+	}
+
+	async checkForRoundEnd() {
+		this._isCheckingRoundEnd = true;
+		let leftToSpawn = 0;
+		await new Promise(res => {
+			const interID = setInterval(() => {
+				for (let spawner of this._spawners) {
+					leftToSpawn += spawner._leftToSpawn;
+				}
+				if (leftToSpawn === 0) {
+					if (this.getLevel().findAll("Zombie").length === 0) {
+						this._roundStarted = false;
+						res();
+						clearInterval(interID);
+					}
+				}
+				leftToSpawn = 0;
+			}, 200);
+		});
+		await this.startRound();
+		this._isCheckingRoundEnd = false;
 	}
 };
 
@@ -621,7 +651,7 @@ export class PlayerGun extends Component {
 					this._playerController._score += 50;
 				this._playerController._score += 10;
 				this.showHitmarker();
-				AudioManager.INSTANCE.playSound("hit", this._playerController._audioListener);
+				AudioManager.INSTANCE.playSound("hit", this._playerController._audioListener, false, 0.1);
 				// Play hit marker sound
 			}
 		}
@@ -669,7 +699,7 @@ export class ZombieSpawner extends Component {
 
 			spawnPos.x += Math.random() * 2;
 			spawnPos.y = 1.5;
-			let zomb = makeZombie(spawnPos, this._round);
+			let zomb = makeZombie(spawnPos, this._round, this);
 			this.getLevel().add(zomb);
 			this._leftToSpawn--;
 
@@ -704,7 +734,7 @@ export class MysteryBoxComp extends Component {
 	}
 	async open() {
 		if (this._opened)
-			return ;
+			return;
 		let weight = 0;
 		let rand = Math.random();
 		let lootWeapon;

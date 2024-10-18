@@ -69,7 +69,6 @@ async function main() {
 
 	/* --------------------- */
 
-
 	/* Sounds Initialization */
 
 	AudioManager.INSTANCE.pushSoundInfo("gunFire", "../sounds/gunFire.ogg");
@@ -100,10 +99,10 @@ async function main() {
 		level.create();
 		level.update();
 		renderer.render(scene, camera);
-		if (input.justPressed("use")) {
-			level.find("MysteryBox").getComponent(MysteryBoxComp).open();
-		}
-
+		// if (input.justPressed("use")) {
+		// 	level.find("MysteryBox").getComponent(MysteryBoxComp).open();
+		// }
+		level.find("SpawnerManager").getComponent(SpawnerManager).startRound();
 	}
 	renderer.setAnimationLoop(animationLoop);
 }
