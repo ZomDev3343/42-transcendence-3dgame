@@ -604,7 +604,7 @@ export class PlayerGun extends Component {
 		this._mag--;
 		LOG_DEBUG("Current munitions : " + this._mag);
 		// Play fire sound
-		AudioManager.INSTANCE.playSound(this._weaponSound);
+		AudioManager.INSTANCE.playSound(this._weaponSound, this._playerController._audioListener);
 		await sleep(50);
 		const zombies = this.getLevel().findAll("Zombie");
 		for (let zombie of zombies) {
@@ -621,7 +621,7 @@ export class PlayerGun extends Component {
 					this._playerController._score += 50;
 				this._playerController._score += 10;
 				this.showHitmarker();
-				AudioManager.INSTANCE.playSound("hit");
+				AudioManager.INSTANCE.playSound("hit", this._playerController._audioListener);
 				// Play hit marker sound
 			}
 		}
@@ -637,6 +637,7 @@ export class PlayerGun extends Component {
 		this._isReloading = true;
 		this._model.anim.playAnim("reload");
 		this._mag = this._magCapacity;
+		AudioManager.INSTANCE.playSound("gunReload", this._playerController._audioListener);
 		await sleep(this._reloadTime);
 		this._isReloading = false;
 	}

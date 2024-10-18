@@ -190,12 +190,12 @@ export class AudioManager {
 			LOG_INFO("All the sounds loaded successfully!");
 	}
 
-	playSound(name, listener, loop) {
+	playSound(name, listener, loop = false, volume = 0.01) {
 		if (name in this._sounds) {
 			const audio = new Audio(listener);
 			audio.setBuffer(this.getBuffer(name));
 			audio.setLoop(loop);
-			audio.setVolume(0.3);
+			audio.setVolume(0.01);
 			audio.play();
 		}
 	}

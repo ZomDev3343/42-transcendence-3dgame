@@ -46,7 +46,6 @@ function makeMainLevel(scene, inputManager, camera) {
 
 
 async function main() {
-	const audioContext = new AudioContext();
 	const scene = new THREE.Scene();
 	const camera = new THREE.PerspectiveCamera(90, WIN_WIDTH / WIN_HEIGHT, 0.1, 1000.0);
 	const renderer = new THREE.WebGLRenderer({antialias: true});
@@ -73,6 +72,10 @@ async function main() {
 
 	/* Sounds Initialization */
 
+	AudioManager.INSTANCE.pushSoundInfo("gunFire", "../sounds/gunFire.ogg");
+	AudioManager.INSTANCE.pushSoundInfo("hit", "../sounds/hit.ogg");
+	AudioManager.INSTANCE.pushSoundInfo("gunReload", "../sounds/gunReload.ogg");
+
 	await AudioManager.INSTANCE.loadSounds();
 
 	/* --------------------- */
@@ -82,7 +85,7 @@ async function main() {
 	renderer.setPixelRatio(window.devicePixelRatio);
 	renderer.shadowMap.enabled = true;
 	renderer.outputEncoding = THREE.sRGBEncoding;
-	const input = new InputManager(audioContext);
+	const input = new InputManager();
 	const level = makeMainLevel(scene, input, camera);
 	camera.position.y = 1;
 
