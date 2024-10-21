@@ -319,24 +319,27 @@ export class PlayerController extends Component {
 	update(dt) {
 		if (!parent)
 			return;
+		let newX = 0;
+		let newZ = 0;
 		if (this.input.pressed("up")) {
-			this.parent.position.x += -this.getForward().x * this._moveSpeed * dt;
-			this.parent.position.z += -this.getForward().z * this._moveSpeed * dt;
+			newX = -this.getForward().x * this._moveSpeed * dt;
+			newZ = -this.getForward().z * this._moveSpeed * dt;
+			LOG_DEBUG(this.parent.position);
 			this._walkTimeBuffer += dt / 2;
 		}
 		else if (this.input.pressed("down")) {
-			this.parent.position.x += this.getForward().x * this._moveSpeed * dt;
-			this.parent.position.z += this.getForward().z * this._moveSpeed * dt;
+			newX = this.getForward().x * this._moveSpeed * dt;
+			newZ = this.getForward().z * this._moveSpeed * dt;
 			this._walkTimeBuffer += dt;
 		}
 		else if (this.input.pressed("right")) {
-			this.parent.position.x += this.getRight().x * this._moveSpeed * dt;
-			this.parent.position.z += this.getRight().z * this._moveSpeed * dt;
+			newX = this.getRight().x * this._moveSpeed * dt;
+			newZ = this.getRight().z * this._moveSpeed * dt;
 			this._walkTimeBuffer += dt;
 		}
 		else if (this.input.pressed("left")) {
-			this.parent.position.x += -this.getRight().x * this._moveSpeed * dt;
-			this.parent.position.z += -this.getRight().z * this._moveSpeed * dt;
+			newX = -this.getRight().x * this._moveSpeed * dt;
+			newZ = -this.getRight().z * this._moveSpeed * dt;
 			this._walkTimeBuffer += dt;
 		}
 		else {
@@ -345,16 +348,27 @@ export class PlayerController extends Component {
 			else
 				this._walkTimeBuffer -= dt * 2;
 		}
-		if (this.input.justPressed("use")) {
-			let mysteryBox = this.getLevel().find("MysteryBox").getComponent(MysteryBoxComp);
-			LOG_DEBUG("Use button!");
-			if (this.parent.position.distanceTo(mysteryBox.parent.position) <= 1.3
-				&& mysteryBox._opened === false && this._score >= 10) {
-				this._score -= 10;
-				LOG_DEBUG("Box opened!");
+		if (this.parent.position.x + newX < 75 && this.parent.position.x + newX > -75)
+			this.parent.position.x += newX;
+		if (this.parent.position.z + newZ < 75 && this.parent.position.z + newZ > -75)
+			this.parent.position.z += newZ;
+
+		let mysteryBox = this.getLevel().find("MysteryBox").getComponent(MysteryBoxComp);
+		if (this.parent.position.distanceTo(mysteryBox.parent.position) <= 1.3) {
+			if (this._score >= 500)
+				document.getElementById("info_text").textContent = "Press E to open the box";
+			else
+				document.getElementById("info_text").textContent = "You need at least 500 points";
+			if (this.input.justPressed("use")
+				&& mysteryBox._opened === false && this._score >= 500) {
+				this._score -= 500;
+				this.updateScoreText();
 				mysteryBox.open();
 			}
+		}else {
+			document.getElementById("info_text").textContent = "";
 		}
+
 		if (this._walkTimeBuffer >= Math.PI / 2)
 			this._walkTimeBuffer = 0;
 
@@ -395,6 +409,9 @@ export class PlayerController extends Component {
 	playerDie() {
 		this._immune = true;
 		LOG_DEBUG("Player died!");
+	}
+	updateScoreText() {
+		document.getElementById("score_text").textContent = this._score;
 	}
 };
 
@@ -479,7 +496,7 @@ export class SpawnerManager extends Component {
 		if (this._roundStarted)
 			return;
 		this._round++;
-		// Show round number
+		document.getElementById("round_text").textContent = this._round;
 		LOG_DEBUG("Round " + this._round + " is starting...");
 		this._roundStarted = true;
 		await sleep(this.timeBeforeRound * 1000);
@@ -681,6 +698,7 @@ export class PlayerGun extends Component {
 				if (touched[0].object.zombie.getComponent(ZombieAI).takeDamage(this._dmg))
 					this._playerController._score += 50;
 				this._playerController._score += 10;
+				this._playerController.updateScoreText();
 				this.showHitmarker();
 				AudioManager.INSTANCE.playSound("hit", this._playerController._audioListener, false, 0.1);
 				// Play hit marker sound
@@ -746,11 +764,11 @@ export class MysteryBoxComp extends Component {
 	constructor() {
 		super(null, null);
 		this._loot = {
-			// "gun": 0.35,
-			// "rifle": 0.25,
-			// "rpg": 0.20,
-			// "laser": 0.10,
-			"danceBomb": 1
+			"gun": 0.35,
+			"rifle": 0.25,
+			"rpg": 0.20,
+			"laser": 0.10,
+			"danceBomb": 0.10
 		};
 		this._model = new AnimatedModel(ModelManager.INSTANCE.getModel("box"));
 		this._opened = false;
@@ -817,6 +835,7 @@ export class MysteryBoxComp extends Component {
 			spawner._shouldSpawn = true;
 		}
 		this.getLevel().player.getComponent(PlayerController)._score += 1000;
+		this.getLevel().player.getComponent(PlayerController).updateScoreText();
 		this._opened = true;
 	}
 };

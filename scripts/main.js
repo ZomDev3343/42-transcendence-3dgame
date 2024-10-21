@@ -3,8 +3,6 @@ import { InputManager } from './input.js';
 import { Level, GameObject, BasicShape, PlayerController, SpawnerManager, ZombieSpawner, PlayerGun, AnimatedModel, MysteryBoxComp } from "./components.js";
 import { WIN_WIDTH, WIN_HEIGHT } from "./constants.js"
 import { AudioManager, ModelManager, TextureManager,  } from './utils.js';
-import { FontLoader } from 'three/addons/loaders/FontLoader.js';
-import { LOG_DEBUG } from './game_logger.js';
 
 /**
  *
@@ -105,8 +103,20 @@ async function main() {
 		level.update();
 		renderer.render(scene, camera);
 	}
+	let scoreText = document.createElement("h1");
+	scoreText["id"] = "score_text";
+	scoreText.textContent = "0";
+	document.body.appendChild(scoreText);
+	let roundText = document.createElement("h1");
+	roundText["id"] = "round_text";
+	roundText.textContent = "Test";
+	document.body.appendChild(roundText);
+	let infoText = document.createElement("h1");
+	infoText["id"] = "info_text";
+	document.body.appendChild(infoText);
 	renderer.setAnimationLoop(animationLoop);
 	level.find("SpawnerManager").getComponent(SpawnerManager).startRound();
+
 }
 
 main();
