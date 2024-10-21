@@ -345,6 +345,16 @@ export class PlayerController extends Component {
 			else
 				this._walkTimeBuffer -= dt * 2;
 		}
+		if (this.input.justPressed("use")) {
+			let mysteryBox = this.getLevel().find("MysteryBox").getComponent(MysteryBoxComp);
+			LOG_DEBUG("Use button!");
+			if (this.parent.position.distanceTo(mysteryBox.parent.position) <= 1.3
+				&& mysteryBox._opened === false && this._score >= 10) {
+				this._score -= 10;
+				LOG_DEBUG("Box opened!");
+				mysteryBox.open();
+			}
+		}
 		if (this._walkTimeBuffer >= Math.PI / 2)
 			this._walkTimeBuffer = 0;
 
@@ -385,7 +395,6 @@ export class PlayerController extends Component {
 	playerDie() {
 		this._immune = true;
 		LOG_DEBUG("Player died!");
-		drawText("Player Died!", {font: baseFont}, this);
 	}
 };
 
@@ -492,9 +501,9 @@ export class SpawnerManager extends Component {
 
 	async checkForRoundEnd() {
 		this._isCheckingRoundEnd = true;
-		let leftToSpawn = 0;
 		await new Promise(res => {
 			const interID = setInterval(() => {
+				let leftToSpawn = 0;
 				for (let spawner of this._spawners) {
 					leftToSpawn += spawner._leftToSpawn;
 				}
@@ -505,7 +514,6 @@ export class SpawnerManager extends Component {
 						clearInterval(interID);
 					}
 				}
-				leftToSpawn = 0;
 			}, 200);
 		});
 		await this.startRound();
@@ -712,20 +720,22 @@ export class ZombieSpawner extends Component {
 		this._spawnRate = 5;
 		this._leftToSpawn = 3;
 		this._spawnRange = 8;
+		this._shouldSpawn = true;
 	}
 	async spawn() {
 		if (!parent || this._leftToSpawn <= 0)
 			return;
 		let level = this.getLevel();
 		if (level) {
-			let spawnPos = this.position.clone();
+			if (this._shouldSpawn === true) {
+				let spawnPos = this.position.clone();
 
-			spawnPos.x += Math.random() * 2;
-			spawnPos.y = 1.5;
-			let zomb = makeZombie(spawnPos, this._round, this);
-			this.getLevel().add(zomb);
-			this._leftToSpawn--;
-
+				spawnPos.x += Math.random() * 2;
+				spawnPos.y = 1.5;
+				let zomb = makeZombie(spawnPos, this._round, this);
+				this.getLevel().add(zomb);
+				this._leftToSpawn--;
+			}
 			await sleep(this._spawnRate * 1000);
 			this.spawn();
 		}
@@ -736,11 +746,11 @@ export class MysteryBoxComp extends Component {
 	constructor() {
 		super(null, null);
 		this._loot = {
-			"gun": 0.35,
-			"rifle": 0.25,
-			"rpg": 0.20,
-			"laser": 0.10,
-			"danceBomb": 0.10
+			// "gun": 0.35,
+			// "rifle": 0.25,
+			// "rpg": 0.20,
+			// "laser": 0.10,
+			"danceBomb": 1
 		};
 		this._model = new AnimatedModel(ModelManager.INSTANCE.getModel("box"));
 		this._opened = false;
@@ -773,18 +783,40 @@ export class MysteryBoxComp extends Component {
 				break;
 			}
 		}
-		if (weaponName === "dancebomb")
-			this.doTheDance();
-		else {
-			lootWeapon.gltf.scene.position.copy(this.parent.position);
-			lootWeapon.gltf.scene.position.y = 1.5;
-			lootWeapon.gltf.scene.rotation.y = Math.PI / 2;
-			lootWeapon.gltf.scene.scale.copy(new THREE.Vector3(0.25, 0.25, 0.25));
-			this.parent.scene.add(lootWeapon.gltf.scene);
-			this._opened = false;
+		lootWeapon.gltf.scene.position.copy(this.parent.position);
+		lootWeapon.gltf.scene.position.y = 1.5;
+		lootWeapon.gltf.scene.rotation.y = Math.PI / 2;
+		lootWeapon.gltf.scene.scale.copy(new THREE.Vector3(0.25, 0.25, 0.25));
+		this.parent.scene.add(lootWeapon.gltf.scene);
+		if (weaponName === "danceBomb") {
+			await this.doTheDance();
+			this.parent.scene.remove(lootWeapon.gltf.scene);
 		}
+		else {
+			await sleep(2500);
+			this.parent.scene.remove(lootWeapon.gltf.scene);
+			//Give the weapon to the player
+		}
+		this._opened = false;
 	}
 	async doTheDance() {
-		
+		await sleep(350);
+		AudioManager.INSTANCE.playSound("dancebomb", this.getLevel().player.getComponent(PlayerController)._audioListener, false, 0.1);
+		for (let spawner of this.getLevel().find("SpawnerManager").getComponent(SpawnerManager)._spawners) {
+			spawner._shouldSpawn = false;
+		}
+		for (let zombie of this.getLevel().findAll("Zombie")) {
+			zombie.getComponent(ZombieAI)._moveSpeed = 0;
+			// Start the dance animation
+		}
+		await sleep(18000);
+		for (let zombie of this.getLevel().findAll("Zombie")) {
+			this.getLevel().remove(zombie);
+		}
+		for (let spawner of this.getLevel().find("SpawnerManager").getComponent(SpawnerManager)._spawners) {
+			spawner._shouldSpawn = true;
+		}
+		this.getLevel().player.getComponent(PlayerController)._score += 1000;
+		this._opened = true;
 	}
 };

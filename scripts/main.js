@@ -17,7 +17,7 @@ function makeMainLevel(scene, inputManager, camera) {
 	const level = new Level(scene);
 
 	const groundPlatform = new GameObject("Ground");
-	groundPlatform.add(new BasicShape(new THREE.BoxGeometry(60, 1, 60), new THREE.MeshBasicMaterial({ color: 0x654005 })));
+	groundPlatform.add(new BasicShape(new THREE.BoxGeometry(180, 1, 180), new THREE.MeshBasicMaterial({ color: 0x654005 })));
 
 
 	const mysteryBox = new GameObject("MysteryBox");
@@ -64,6 +64,10 @@ async function main() {
 
 	ModelManager.INSTANCE.pushModelInfo("test", "../models/test.glb");
 	ModelManager.INSTANCE.pushModelInfo("gun", "../models/gun.glb");
+	ModelManager.INSTANCE.pushModelInfo("rifle", "../models/gun.glb");
+	ModelManager.INSTANCE.pushModelInfo("rpg", "../models/gun.glb");
+	ModelManager.INSTANCE.pushModelInfo("laser", "../models/gun.glb");
+	ModelManager.INSTANCE.pushModelInfo("danceBomb", "../models/gun.glb");
 	ModelManager.INSTANCE.pushModelInfo("box", "../models/box.glb");
 
 	await ModelManager.INSTANCE.loadModels();
@@ -76,14 +80,11 @@ async function main() {
 	AudioManager.INSTANCE.pushSoundInfo("hit", "../sounds/hit.ogg");
 	AudioManager.INSTANCE.pushSoundInfo("gunReload", "../sounds/gunReload.ogg");
 	AudioManager.INSTANCE.pushSoundInfo("playerHit", "../sounds/playerHit.ogg");
+	AudioManager.INSTANCE.pushSoundInfo("dancebomb", "../sounds/dancebomb.ogg");
 
 	await AudioManager.INSTANCE.loadSounds();
 
-	
-
 	/* --------------------- */
-
-
 
 	renderer.setPixelRatio(window.devicePixelRatio);
 	renderer.shadowMap.enabled = true;
