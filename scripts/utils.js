@@ -1,5 +1,6 @@
-import { Audio, AudioLoader, TextureLoader } from 'three';
+import { Audio, AudioLoader, Mesh, TextureLoader } from 'three';
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 import { LOG_DEBUG, LOG_ERROR, LOG_INFO, LOG_WARNING } from "./game_logger";
 
 export async function sleep(ms) {
@@ -195,7 +196,7 @@ export class AudioManager {
 			const audio = new Audio(listener);
 			audio.setBuffer(this.getBuffer(name));
 			audio.setLoop(loop);
-			audio.setVolume(0.01);
+			audio.setVolume(volume);
 			audio.play();
 		}
 	}
@@ -205,4 +206,14 @@ export class AudioManager {
 	}
 
 	get loader() { return this._loader; }
+};
+
+export async function drawText(text, parameters, player) {
+	let geometry = new TextGeometry(text, parameters);
+	let mesh = new Mesh(geometry);
+	mesh.position.x = player.position.x - player.getForward().x * 0.5;
+	mesh.position.z = player.position.z - player.getForward().z * 0.5;
+	player.getLevel().scene.add(mesh);
+	await sleep(2000);
+	player.getLevel().scene.remove(mesh);
 };

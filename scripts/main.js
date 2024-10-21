@@ -3,6 +3,7 @@ import { InputManager } from './input.js';
 import { Level, GameObject, BasicShape, PlayerController, SpawnerManager, ZombieSpawner, PlayerGun, AnimatedModel, MysteryBoxComp } from "./components.js";
 import { WIN_WIDTH, WIN_HEIGHT } from "./constants.js"
 import { AudioManager, ModelManager, TextureManager,  } from './utils.js';
+import { FontLoader } from 'three/addons/loaders/FontLoader.js';
 import { LOG_DEBUG } from './game_logger.js';
 
 /**
@@ -74,8 +75,11 @@ async function main() {
 	AudioManager.INSTANCE.pushSoundInfo("gunFire", "../sounds/gunFire.ogg");
 	AudioManager.INSTANCE.pushSoundInfo("hit", "../sounds/hit.ogg");
 	AudioManager.INSTANCE.pushSoundInfo("gunReload", "../sounds/gunReload.ogg");
+	AudioManager.INSTANCE.pushSoundInfo("playerHit", "../sounds/playerHit.ogg");
 
 	await AudioManager.INSTANCE.loadSounds();
+
+	
 
 	/* --------------------- */
 
@@ -99,12 +103,9 @@ async function main() {
 		level.create();
 		level.update();
 		renderer.render(scene, camera);
-		// if (input.justPressed("use")) {
-		// 	level.find("MysteryBox").getComponent(MysteryBoxComp).open();
-		// }
-		level.find("SpawnerManager").getComponent(SpawnerManager).startRound();
 	}
 	renderer.setAnimationLoop(animationLoop);
+	level.find("SpawnerManager").getComponent(SpawnerManager).startRound();
 }
 
 main();

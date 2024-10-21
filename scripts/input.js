@@ -1,5 +1,3 @@
-import { WIN_HEIGHT, WIN_WIDTH } from "./constants";
-
 const audioCtx = new AudioContext();
 
 class InputManager {

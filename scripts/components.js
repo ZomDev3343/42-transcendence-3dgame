@@ -2,8 +2,7 @@ import * as THREE from 'three'
 import { LOG_DEBUG, LOG_ERROR, LOG_WARNING } from './game_logger.js';
 import { generateUUID } from 'three/src/math/MathUtils.js';
 import { makeZombie } from './maker.js';
-import { AudioManager, ModelManager, sleep, TextureManager } from './utils.js';
-import { tslFn } from 'three/webgpu';
+import { AudioManager, drawText, ModelManager, sleep, TextureManager } from './utils.js';
 
 export class Component {
 	constructor(parent, scene) {
@@ -264,6 +263,9 @@ export class PlayerController extends Component {
 		this._walkTimeBuffer = 0;
 		this._score = 0;
 		this._mouseX = 0;
+		this._health = 3;
+		this._immuneDelay = 1000;
+		this._immune = false;
 		this._targetSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: TextureManager.INSTANCE.getTexture("target") }));
 		this._targetSprite.scale.multiplyScalar(0.02);
 		this._targetSprite.position.y = 1;
@@ -366,6 +368,25 @@ export class PlayerController extends Component {
 		this.parent.scene.remove(this._hitmarkerSprite);
 		this.parent.scene.remove(this._audioListener);
 	}
+	async takeDamage() {
+		if (this._immune === false) {
+			this._health--;
+			LOG_DEBUG("Player took damage!");
+			AudioManager.INSTANCE.playSound("playerHit", this._audioListener, false, 0.1);
+			if (this._health <= 0)
+				this.playerDie();
+			else {
+				this._immune = true;
+				await sleep(this._immuneDelay);
+				this._immune = false;
+			}
+		}
+	}
+	playerDie() {
+		this._immune = true;
+		LOG_DEBUG("Player died!");
+		drawText("Player Died!", {font: baseFont}, this);
+	}
 };
 
 export class ZombieAI extends Component {
@@ -411,6 +432,8 @@ export class ZombieAI extends Component {
 			let dirX = player.position.x - this.parent.position.x;
 			let dirZ = player.position.z - this.parent.position.z;
 			this.parent.rotation.y = Math.atan2(dirX, dirZ);
+			if (this.parent.position.distanceTo(player.position) <= 0.5)
+				player.getComponent(PlayerController).takeDamage();
 			this._isRefreshing = false;
 		}
 	}
@@ -713,11 +736,11 @@ export class MysteryBoxComp extends Component {
 	constructor() {
 		super(null, null);
 		this._loot = {
-			"gun": 1
-			// "rifle": 0.25,
-			// "rpg": 0.20,
-			// "laser": 0.10,
-			// "danceBomb": 0.10
+			"gun": 0.35,
+			"rifle": 0.25,
+			"rpg": 0.20,
+			"laser": 0.10,
+			"danceBomb": 0.10
 		};
 		this._model = new AnimatedModel(ModelManager.INSTANCE.getModel("box"));
 		this._opened = false;
@@ -738,22 +761,30 @@ export class MysteryBoxComp extends Component {
 		let weight = 0;
 		let rand = Math.random();
 		let lootWeapon;
+		let weaponName;
 		this._opened = true;
 		for (let m in this._loot) {
 			weight += this._loot[m];
 			if (weight >= rand) {
+				weaponName = m;
 				LOG_DEBUG("Weapon from the box : " + m);
 				lootWeapon = new AnimatedModel(ModelManager.INSTANCE.getModel(m));
 				lootWeapon.parent = this.parent;
 				break;
 			}
 		}
-		lootWeapon.gltf.scene.position.copy(this.parent.position);
-		lootWeapon.gltf.scene.position.y = 1.5;
-		lootWeapon.gltf.scene.rotation.y = Math.PI / 2;
-		lootWeapon.gltf.scene.scale.copy(new THREE.Vector3(0.25, 0.25, 0.25));
-		this.parent.scene.add(lootWeapon.gltf.scene);
-		// TODO animation de l'arme qui sort de la boite
-		this._opened = false;
+		if (weaponName === "dancebomb")
+			this.doTheDance();
+		else {
+			lootWeapon.gltf.scene.position.copy(this.parent.position);
+			lootWeapon.gltf.scene.position.y = 1.5;
+			lootWeapon.gltf.scene.rotation.y = Math.PI / 2;
+			lootWeapon.gltf.scene.scale.copy(new THREE.Vector3(0.25, 0.25, 0.25));
+			this.parent.scene.add(lootWeapon.gltf.scene);
+			this._opened = false;
+		}
+	}
+	async doTheDance() {
+		
 	}
 };
