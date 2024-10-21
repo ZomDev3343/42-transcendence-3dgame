@@ -1,8 +1,10 @@
 - Regen au bout d'un certain temps
 - Boite mystere avec animation
-- Menu de depart du jeu
-- Polish particules
-	- Hit
-	- Zombie Death
+- Differents comportements d'arme
 
-- Musique d'ambiances
+
+* Menu de depart du jeu
+* Polish particules
+	* Hit/
+	* Zombie Death
+* Musique d'ambiances
