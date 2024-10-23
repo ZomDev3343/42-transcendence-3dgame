@@ -792,11 +792,11 @@ export class MysteryBoxComp extends Component {
 	constructor() {
 		super(null, null);
 		this._loot = {
-			"gun": 0.35,
+			"gun": 0.55,
 			"rifle": 0.30,
 			//"rpg": 0.20,
-			"laser": 0.25,
-			"danceBomb": 0.10
+			"laser": 0.10,
+			"danceBomb": 0.05
 		};
 		this._model = new AnimatedModel(ModelManager.INSTANCE.getModel("box"));
 		this._opened = false;
@@ -845,8 +845,6 @@ export class MysteryBoxComp extends Component {
 			this.getLevel().player.removeComponent(oldGun);
 			if (weaponName === "rifle")
 				this.getLevel().player.add(new PlayerGun(input, 3, 2500, 80, 45, "rifle"));
-			else if (weaponName === "gun")
-				this.getLevel().player.add(new PlayerGun(input));
 			else if (weaponName === "laser")
 				this.getLevel().player.add(new PlayerGun(input, 100, 4000, 400, 45, "laser", "raygun"));
 		}
