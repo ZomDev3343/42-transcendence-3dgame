@@ -69,9 +69,9 @@ function makeMainLevel(scene, inputManager, camera) {
 				treeCopy.position.copy(new THREE.Vector3(x, 0.5, z));
 				level.scene.add(treeCopy);
 				level._mapObjs.push(treeCopy);
-			}else if (r > 25 && r <= 50) {
+			} else if (r > 25 && r <= 50) {
 				let rockCopy = ModelManager.INSTANCE.getModel("rock").scene.clone();
-				rockCopy.position.copy(new THREE.Vector3(x - 2, 0 + Math.random() * 0.25, z - 2));
+				rockCopy.position.copy(new THREE.Vector3(x - 2, 0.5 - Math.random() * 0.25, z - 2));
 				rockCopy.scale.multiplyScalar(0.5);
 				rockCopy.rotation.setFromVector3(new THREE.Vector3(Math.random() * Math.PI /2, Math.random() * Math.PI, Math.random() * Math.PI / 4));
 				level.scene.add(rockCopy);
@@ -102,10 +102,9 @@ async function main() {
 
 	ModelManager.INSTANCE.pushModelInfo("test", "../models/test.glb");
 	ModelManager.INSTANCE.pushModelInfo("gun", "../models/gun.glb");
-	ModelManager.INSTANCE.pushModelInfo("rifle", "../models/gun.glb");
-	ModelManager.INSTANCE.pushModelInfo("rpg", "../models/gun.glb");
-	ModelManager.INSTANCE.pushModelInfo("laser", "../models/gun.glb");
-	ModelManager.INSTANCE.pushModelInfo("danceBomb", "../models/gun.glb");
+	ModelManager.INSTANCE.pushModelInfo("rifle", "../models/rifle.glb");
+	ModelManager.INSTANCE.pushModelInfo("laser", "../models/raygun.glb");
+	ModelManager.INSTANCE.pushModelInfo("danceBomb", "../models/dancebomb.glb");
 	ModelManager.INSTANCE.pushModelInfo("box", "../models/box.glb");
 	ModelManager.INSTANCE.pushModelInfo("rock", "../models/rock.glb");
 	ModelManager.INSTANCE.pushModelInfo("tree", "../models/tree.glb");
@@ -117,10 +116,13 @@ async function main() {
 	/* Sounds Initialization */
 
 	AudioManager.INSTANCE.pushSoundInfo("gunFire", "../sounds/gunFire.ogg");
+	AudioManager.INSTANCE.pushSoundInfo("raygun", "../sounds/raygun.ogg");
 	AudioManager.INSTANCE.pushSoundInfo("hit", "../sounds/hit.ogg");
 	AudioManager.INSTANCE.pushSoundInfo("gunReload", "../sounds/gunReload.ogg");
 	AudioManager.INSTANCE.pushSoundInfo("playerHit", "../sounds/playerHit.ogg");
 	AudioManager.INSTANCE.pushSoundInfo("dancebomb", "../sounds/dancebomb.ogg");
+	AudioManager.INSTANCE.pushSoundInfo("theme", "../sounds/theme.ogg");
+
 
 	await AudioManager.INSTANCE.loadSounds();
 
@@ -157,6 +159,7 @@ async function main() {
 	infoText["id"] = "info_text";
 	document.body.appendChild(infoText);
 	renderer.setAnimationLoop(animationLoop);
+	AudioManager.INSTANCE.playSound("theme", level.find("Player").getComponent(PlayerController)._audioListener, true, 0.05);
 	level.find("SpawnerManager").getComponent(SpawnerManager).startRound();
 
 }

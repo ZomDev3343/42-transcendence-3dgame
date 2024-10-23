@@ -3,6 +3,7 @@ import { LOG_DEBUG, LOG_ERROR, LOG_WARNING } from './game_logger.js';
 import { generateUUID } from 'three/src/math/MathUtils.js';
 import { makeZombie } from './maker.js';
 import { AudioManager, drawText, ModelManager, sleep, TextureManager } from './utils.js';
+import { mx_bilerp_1 } from 'three/src/nodes/materialx/lib/mx_noise.js';
 
 export class Component {
 	constructor(parent, scene) {
@@ -116,13 +117,13 @@ export class GameObject extends Component {
 		else
 			LOG_ERROR("Can't add non-component to %s gameobject!", this.name);
 	}
-	remove(component) {
+	removeComponent(component) {
 		if (component instanceof Component) {
-			if (!this.components.includes(component))
-				return;
-			let idx = this.components.indexOf(component);
-			if (idx !== -1) {
-				this.components.splice(idx, 1);
+			for (let i = 0; i < this.components.length; i++) {
+				if (this.components[i]._uuid === component._uuid) {
+					this.components.splice(i, 1);
+					component.remove();
+				}
 			}
 		}
 		else
@@ -384,7 +385,9 @@ export class PlayerController extends Component {
 				mysteryBox.open();
 			}
 		} else {
-			document.getElementById("info_text").textContent = "";
+			if (document.getElementById("info_text").textContent === "Press E to open the box"
+				|| document.getElementById("info_text").textContent === "You need at least 500 points")
+				document.getElementById("info_text").textContent = "";
 		}
 
 		if (this._walkTimeBuffer >= Math.PI / 2)
@@ -446,7 +449,6 @@ export class ZombieAI extends Component {
 		this._health = 2;
 		this._spawner = spawner;
 		this._isRefreshing = false;
-		this._directionHelper = new THREE.ArrowHelper();
 	}
 	getForward() {
 		return new THREE.Vector3(
@@ -456,11 +458,8 @@ export class ZombieAI extends Component {
 		);
 	}
 	create() {
-		this._directionHelper.position.copy(this.parent.position);
-		this.parent.scene.add(this._directionHelper);
 	}
 	remove() {
-		this.parent.scene.remove(this._directionHelper);
 	}
 	update(dt) {
 		if (!parent)
@@ -469,10 +468,14 @@ export class ZombieAI extends Component {
 			this.getLevel().player.getComponent(PlayerController).takeDamage();
 		}
 		else {
-			this.parent.position.x += this.getForward().x * this._moveSpeed * dt;
-			this.parent.position.z += this.getForward().z * this._moveSpeed * dt;
+			const rayPos = this.parent.position.clone();
+			rayPos.y += 0.2;
+			const ray = new THREE.Raycaster(rayPos, this.getForward().multiplyScalar(-1).normalize(), 0.1, 0.4);
+			if (ray.intersectObjects(this.getLevel()._mapObjs).length === 0) {
+				this.parent.position.x += this.getForward().x * this._moveSpeed * dt;
+				this.parent.position.z += this.getForward().z * this._moveSpeed * dt;
+			}
 		}
-		this._directionHelper.setDirection(new THREE.Vector3(-Math.cos(this.parent.rotation.y), 0, Math.sin(this.parent.rotation.y)).normalize());
 		if (this._isRefreshing === false)
 			this.lookForPlayer();
 	}
@@ -484,7 +487,7 @@ export class ZombieAI extends Component {
 			let dirX = player.position.x - this.parent.position.x;
 			let dirZ = player.position.z - this.parent.position.z;
 			this.parent.rotation.y = Math.atan2(dirX, dirZ);
-			
+
 			this._isRefreshing = false;
 		}
 	}
@@ -492,7 +495,6 @@ export class ZombieAI extends Component {
 		if (this._health - dmg <= 0) {
 			// Death animation
 			this.getLevel().remove(this.parent);
-			LOG_DEBUG("Zombie died!");
 			return true;
 		}
 		else {
@@ -522,9 +524,11 @@ export class SpawnerManager extends Component {
 			return;
 		this._round++;
 		document.getElementById("round_text").textContent = this._round;
+		document.getElementById("info_text").textContent = "Round " + this._round + " is starting!";
 		LOG_DEBUG("Round " + this._round + " is starting...");
 		this._roundStarted = true;
 		await sleep(this.timeBeforeRound * 1000);
+		document.getElementById("info_text").textContent = "";
 		LOG_DEBUG("Round started " + this._round + " started!");
 		for (let spawner of this._spawners) {
 			if (spawner instanceof ZombieSpawner) {
@@ -644,7 +648,7 @@ export class ZombieModel extends AnimatedModel {
 
 export class PlayerGun extends Component {
 
-	constructor(inputManager, reloadTime = 1500, shootDelay = 200, magCapacity = 20) {
+	constructor(inputManager, dmg = 1, reloadTime = 1500, shootDelay = 350, magCapacity = 20, weaponName = "gun", weaponSound = "gunFire") {
 		super(null, null);
 		this._input = inputManager;
 		this._shootDelay = shootDelay;
@@ -656,12 +660,12 @@ export class PlayerGun extends Component {
 		this._shootRange = 30;
 		this._isRefreshing = false;
 		this._playerController = null;
-		this._dmg = 1;
-		this._model = new AnimatedModel(ModelManager.INSTANCE.getModel("gun"));
+		this._dmg = dmg;
+		this._model = new AnimatedModel(ModelManager.INSTANCE.getModel(weaponName));
 		this._model.anim.addPose("reload");
 		this._model.anim.addPose("shoot");
 		this._model.anim.compileAnims();
-		this._weaponSound = "gunFire";
+		this._weaponSound = weaponSound;
 		for (let anim in this._model.anim.anims) {
 			this._model.anim.anims[anim].repetitions = 1;
 		}
@@ -687,7 +691,7 @@ export class PlayerGun extends Component {
 			this.reload();
 		if (this._hasShot === false && this._isReloading === false
 			&& this._mag > 0
-			&& this._input.justPressed("shoot") === true)
+			&& this._input.pressed("shoot") === true)
 			this.shoot();
 		this.updatePos();
 		this._model.update(dt);
@@ -789,9 +793,9 @@ export class MysteryBoxComp extends Component {
 		super(null, null);
 		this._loot = {
 			"gun": 0.35,
-			"rifle": 0.25,
-			"rpg": 0.20,
-			"laser": 0.10,
+			"rifle": 0.30,
+			//"rpg": 0.20,
+			"laser": 0.25,
 			"danceBomb": 0.10
 		};
 		this._model = new AnimatedModel(ModelManager.INSTANCE.getModel("box"));
@@ -835,8 +839,16 @@ export class MysteryBoxComp extends Component {
 		}
 		else {
 			await sleep(2500);
+			const oldGun = this.getLevel().player.getComponent(PlayerGun);
+			const input = this.getLevel().player.getComponent(PlayerGun)._input;
 			this.parent.scene.remove(lootWeapon.gltf.scene);
-			//Give the weapon to the player
+			this.getLevel().player.removeComponent(oldGun);
+			if (weaponName === "rifle")
+				this.getLevel().player.add(new PlayerGun(input, 3, 2500, 80, 45, "rifle"));
+			else if (weaponName === "gun")
+				this.getLevel().player.add(new PlayerGun(input));
+			else if (weaponName === "laser")
+				this.getLevel().player.add(new PlayerGun(input, 100, 4000, 400, 45, "laser", "raygun"));
 		}
 		this._opened = false;
 	}
