@@ -68,12 +68,14 @@ function makeMainLevel(scene, inputManager, camera) {
 				let treeCopy = ModelManager.INSTANCE.getModel("tree").scene.clone();
 				treeCopy.position.copy(new THREE.Vector3(x, 0.5, z));
 				level.scene.add(treeCopy);
+				level._mapObjs.push(treeCopy);
 			}else if (r > 25 && r <= 50) {
 				let rockCopy = ModelManager.INSTANCE.getModel("rock").scene.clone();
 				rockCopy.position.copy(new THREE.Vector3(x - 2, 0 + Math.random() * 0.25, z - 2));
 				rockCopy.scale.multiplyScalar(0.5);
 				rockCopy.rotation.setFromVector3(new THREE.Vector3(Math.random() * Math.PI /2, Math.random() * Math.PI, Math.random() * Math.PI / 4));
 				level.scene.add(rockCopy);
+				level._mapObjs.push(rockCopy);
 			}
 		}
 	}

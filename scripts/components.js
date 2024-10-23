@@ -190,6 +190,7 @@ export class Level extends Component {
 		this._player = null;
 		this._objects = [];
 		this._zombiesObjs = [];
+		this._mapObjs = [];
 	}
 
 	get player() { return this._player; }
@@ -322,32 +323,37 @@ export class PlayerController extends Component {
 			return;
 		let newX = 0;
 		let newZ = 0;
-		if (this.input.pressed("up")) {
-			newX = -this.getForward().x * this._moveSpeed * dt;
-			newZ = -this.getForward().z * this._moveSpeed * dt;
-			LOG_DEBUG(this.parent.position);
-			this._walkTimeBuffer += dt / 2;
-		}
-		else if (this.input.pressed("down")) {
-			newX = this.getForward().x * this._moveSpeed * dt;
-			newZ = this.getForward().z * this._moveSpeed * dt;
-			this._walkTimeBuffer += dt;
-		}
-		else if (this.input.pressed("right")) {
-			newX = this.getRight().x * this._moveSpeed * dt;
-			newZ = this.getRight().z * this._moveSpeed * dt;
-			this._walkTimeBuffer += dt;
-		}
-		else if (this.input.pressed("left")) {
-			newX = -this.getRight().x * this._moveSpeed * dt;
-			newZ = -this.getRight().z * this._moveSpeed * dt;
-			this._walkTimeBuffer += dt;
-		}
-		else {
-			if (this._walkTimeBuffer <= 0)
-				this._walkTimeBuffer = 0;
-			else
-				this._walkTimeBuffer -= dt * 2;
+		let rayStartPos = this.parent.position.clone();
+		rayStartPos.y += 0.1;
+		const ray = new THREE.Raycaster(rayStartPos, this.getForward().multiplyScalar(-1).normalize(), 0.1, 0.5);
+		if (ray.intersectObjects(this.getLevel()._mapObjs).length === 0) {
+			if (this.input.pressed("up")) {
+				newX = -this.getForward().x * this._moveSpeed * dt;
+				newZ = -this.getForward().z * this._moveSpeed * dt;
+				LOG_DEBUG(this.parent.position);
+				this._walkTimeBuffer += dt / 2;
+			}
+			else if (this.input.pressed("down")) {
+				newX = this.getForward().x * this._moveSpeed * dt;
+				newZ = this.getForward().z * this._moveSpeed * dt;
+				this._walkTimeBuffer += dt;
+			}
+			else if (this.input.pressed("right")) {
+				newX = this.getRight().x * this._moveSpeed * dt;
+				newZ = this.getRight().z * this._moveSpeed * dt;
+				this._walkTimeBuffer += dt;
+			}
+			else if (this.input.pressed("left")) {
+				newX = -this.getRight().x * this._moveSpeed * dt;
+				newZ = -this.getRight().z * this._moveSpeed * dt;
+				this._walkTimeBuffer += dt;
+			}
+			else {
+				if (this._walkTimeBuffer <= 0)
+					this._walkTimeBuffer = 0;
+				else
+					this._walkTimeBuffer -= dt * 2;
+			}
 		}
 		if (this.parent.position.x + newX < 75 && this.parent.position.x + newX > -75)
 			this.parent.position.x += newX;
@@ -366,7 +372,7 @@ export class PlayerController extends Component {
 				this.updateScoreText();
 				mysteryBox.open();
 			}
-		}else {
+		} else {
 			document.getElementById("info_text").textContent = "";
 		}
 
@@ -382,7 +388,6 @@ export class PlayerController extends Component {
 		this._hitmarkerSprite.position.z = this.parent.position.z - 0.5 * this.getForward().z;
 		this._audioListener.position.copy(this.parent.position);
 		this._flashlight.position.copy(this.parent.position);
-		this._flashlight.rotation.copy(this.parent.rotation);
 	}
 
 	create() {
@@ -682,7 +687,6 @@ export class PlayerGun extends Component {
 		const startPos = this._playerController.camera.position.clone();
 		const ray = new THREE.Raycaster(startPos, this._playerController.getForward().multiplyScalar(-1).normalize(), 0.1, this._shootRange);
 		const zombiesObjs = [];
-		//this.parent.scene.add(new THREE.ArrowHelper(this._playerController.getForward().multiplyScalar(-1).normalize(), this._playerController.camera.position));
 		this._model.anim.playAnim("shoot");
 		this._mag--;
 		LOG_DEBUG("Current munitions : " + this._mag);
