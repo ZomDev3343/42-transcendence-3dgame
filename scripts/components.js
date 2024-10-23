@@ -324,7 +324,7 @@ export class PlayerController extends Component {
 		let newX = 0;
 		let newZ = 0;
 		if (this.input.pressed("up")) {
-			let rayStartPos = this.parent.position.clone();
+			const rayStartPos = this.parent.position.clone();
 			const ray = new THREE.Raycaster(rayStartPos, this.getForward().multiplyScalar(-1).normalize(), 0.1, 0.4);
 			if (ray.intersectObjects(this.getLevel()._mapObjs).length === 0 && ray.intersectObjects(this.getLevel()._zombiesObjs).length === 0) {
 				newX = -this.getForward().x * this._moveSpeed * dt;
@@ -333,7 +333,7 @@ export class PlayerController extends Component {
 			}
 		}
 		else if (this.input.pressed("down")) {
-			let rayStartPos = this.parent.position.clone();
+			const rayStartPos = this.parent.position.clone();
 			const ray = new THREE.Raycaster(rayStartPos, this.getForward().normalize(), 0.1, 0.2);
 			if (ray.intersectObjects(this.getLevel()._mapObjs).length === 0 && ray.intersectObjects(this.getLevel()._zombiesObjs).length === 0) {
 				newX = this.getForward().x * this._moveSpeed * dt;
@@ -342,7 +342,7 @@ export class PlayerController extends Component {
 			}
 		}
 		else if (this.input.pressed("right")) {
-			let rayStartPos = this.parent.position.clone();
+			const rayStartPos = this.parent.position.clone();
 			const ray = new THREE.Raycaster(rayStartPos, this.getRight().normalize(), 0.1, 0.25);
 			if (ray.intersectObjects(this.getLevel()._mapObjs).length === 0 && ray.intersectObjects(this.getLevel()._zombiesObjs).length === 0) {
 				newX = this.getRight().x * this._moveSpeed * dt;
@@ -351,7 +351,7 @@ export class PlayerController extends Component {
 			}
 		}
 		else if (this.input.pressed("left")) {
-			let rayStartPos = this.parent.position.clone();
+			const rayStartPos = this.parent.position.clone();
 			const ray = new THREE.Raycaster(rayStartPos, this.getRight().multiplyScalar(-1).normalize(), 0.1, 0.25);
 			if (ray.intersectObjects(this.getLevel()._mapObjs).length === 0 && ray.intersectObjects(this.getLevel()._zombiesObjs).length === 0) {
 				newX = -this.getRight().x * this._moveSpeed * dt;
@@ -465,8 +465,13 @@ export class ZombieAI extends Component {
 	update(dt) {
 		if (!parent)
 			return;
-		this.parent.position.x += this.getForward().x * this._moveSpeed * dt;
-		this.parent.position.z += this.getForward().z * this._moveSpeed * dt;
+		if (this.parent.position.distanceTo(this.getLevel().player.position) <= 0.41) {
+			this.getLevel().player.getComponent(PlayerController).takeDamage();
+		}
+		else {
+			this.parent.position.x += this.getForward().x * this._moveSpeed * dt;
+			this.parent.position.z += this.getForward().z * this._moveSpeed * dt;
+		}
 		this._directionHelper.setDirection(new THREE.Vector3(-Math.cos(this.parent.rotation.y), 0, Math.sin(this.parent.rotation.y)).normalize());
 		if (this._isRefreshing === false)
 			this.lookForPlayer();
@@ -479,8 +484,7 @@ export class ZombieAI extends Component {
 			let dirX = player.position.x - this.parent.position.x;
 			let dirZ = player.position.z - this.parent.position.z;
 			this.parent.rotation.y = Math.atan2(dirX, dirZ);
-			if (this.parent.position.distanceTo(player.position) <= 0.5)
-				player.getComponent(PlayerController).takeDamage();
+			
 			this._isRefreshing = false;
 		}
 	}
@@ -815,7 +819,6 @@ export class MysteryBoxComp extends Component {
 			weight += this._loot[m];
 			if (weight >= rand) {
 				weaponName = m;
-				LOG_DEBUG("Weapon from the box : " + m);
 				lootWeapon = new AnimatedModel(ModelManager.INSTANCE.getModel(m));
 				lootWeapon.parent = this.parent;
 				break;
