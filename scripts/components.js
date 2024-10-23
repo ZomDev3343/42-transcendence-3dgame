@@ -323,38 +323,49 @@ export class PlayerController extends Component {
 			return;
 		let newX = 0;
 		let newZ = 0;
-		let rayStartPos = this.parent.position.clone();
-		rayStartPos.y += 0.1;
-		const ray = new THREE.Raycaster(rayStartPos, this.getForward().multiplyScalar(-1).normalize(), 0.1, 0.5);
-		if (ray.intersectObjects(this.getLevel()._mapObjs).length === 0) {
-			if (this.input.pressed("up")) {
+		if (this.input.pressed("up")) {
+			let rayStartPos = this.parent.position.clone();
+			const ray = new THREE.Raycaster(rayStartPos, this.getForward().multiplyScalar(-1).normalize(), 0.1, 0.4);
+			if (ray.intersectObjects(this.getLevel()._mapObjs).length === 0 && ray.intersectObjects(this.getLevel()._zombiesObjs).length === 0) {
 				newX = -this.getForward().x * this._moveSpeed * dt;
 				newZ = -this.getForward().z * this._moveSpeed * dt;
-				LOG_DEBUG(this.parent.position);
 				this._walkTimeBuffer += dt / 2;
 			}
-			else if (this.input.pressed("down")) {
+		}
+		else if (this.input.pressed("down")) {
+			let rayStartPos = this.parent.position.clone();
+			const ray = new THREE.Raycaster(rayStartPos, this.getForward().normalize(), 0.1, 0.2);
+			if (ray.intersectObjects(this.getLevel()._mapObjs).length === 0 && ray.intersectObjects(this.getLevel()._zombiesObjs).length === 0) {
 				newX = this.getForward().x * this._moveSpeed * dt;
 				newZ = this.getForward().z * this._moveSpeed * dt;
 				this._walkTimeBuffer += dt;
 			}
-			else if (this.input.pressed("right")) {
+		}
+		else if (this.input.pressed("right")) {
+			let rayStartPos = this.parent.position.clone();
+			const ray = new THREE.Raycaster(rayStartPos, this.getRight().normalize(), 0.1, 0.25);
+			if (ray.intersectObjects(this.getLevel()._mapObjs).length === 0 && ray.intersectObjects(this.getLevel()._zombiesObjs).length === 0) {
 				newX = this.getRight().x * this._moveSpeed * dt;
 				newZ = this.getRight().z * this._moveSpeed * dt;
 				this._walkTimeBuffer += dt;
 			}
-			else if (this.input.pressed("left")) {
+		}
+		else if (this.input.pressed("left")) {
+			let rayStartPos = this.parent.position.clone();
+			const ray = new THREE.Raycaster(rayStartPos, this.getRight().multiplyScalar(-1).normalize(), 0.1, 0.25);
+			if (ray.intersectObjects(this.getLevel()._mapObjs).length === 0 && ray.intersectObjects(this.getLevel()._zombiesObjs).length === 0) {
 				newX = -this.getRight().x * this._moveSpeed * dt;
 				newZ = -this.getRight().z * this._moveSpeed * dt;
 				this._walkTimeBuffer += dt;
 			}
-			else {
-				if (this._walkTimeBuffer <= 0)
-					this._walkTimeBuffer = 0;
-				else
-					this._walkTimeBuffer -= dt * 2;
-			}
 		}
+		else {
+			if (this._walkTimeBuffer <= 0)
+				this._walkTimeBuffer = 0;
+			else
+				this._walkTimeBuffer -= dt * 2;
+		}
+
 		if (this.parent.position.x + newX < 75 && this.parent.position.x + newX > -75)
 			this.parent.position.x += newX;
 		if (this.parent.position.z + newZ < 75 && this.parent.position.z + newZ > -75)
