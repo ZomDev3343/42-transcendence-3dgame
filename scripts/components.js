@@ -274,6 +274,7 @@ export class PlayerController extends Component {
 		this._hitmarkerSprite.position.y = 1;
 		this._hitmarkerSprite.visible = false;
 		this._audioListener = new THREE.AudioListener();
+		this._flashlight = new THREE.PointLight(0xffffff, 0.25, 5, 0.2);
 
 		window.addEventListener("mousemove", (ev) => {
 			if (this.input.clicked(0)) {
@@ -380,17 +381,21 @@ export class PlayerController extends Component {
 		this._hitmarkerSprite.position.x = this.parent.position.x - 0.5 * this.getForward().x;
 		this._hitmarkerSprite.position.z = this.parent.position.z - 0.5 * this.getForward().z;
 		this._audioListener.position.copy(this.parent.position);
+		this._flashlight.position.copy(this.parent.position);
+		this._flashlight.rotation.copy(this.parent.rotation);
 	}
 
 	create() {
 		this.parent.scene.add(this._targetSprite);
 		this.parent.scene.add(this._hitmarkerSprite);
 		this.parent.scene.add(this._audioListener);
+		this.parent.scene.add(this._flashlight);
 	}
 	remove() {
 		this.parent.scene.remove(this._targetSprite);
 		this.parent.scene.remove(this._hitmarkerSprite);
 		this.parent.scene.remove(this._audioListener);
+		this.parent.scene.remove(this._flashlight);
 	}
 	async takeDamage() {
 		if (this._immune === false) {

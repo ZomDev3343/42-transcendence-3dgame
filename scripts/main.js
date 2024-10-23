@@ -3,6 +3,8 @@ import { InputManager } from './input.js';
 import { Level, GameObject, BasicShape, PlayerController, SpawnerManager, ZombieSpawner, PlayerGun, AnimatedModel, MysteryBoxComp } from "./components.js";
 import { WIN_WIDTH, WIN_HEIGHT } from "./constants.js"
 import { AudioManager, ModelManager, TextureManager,  } from './utils.js';
+import { LOG_DEBUG } from './game_logger.js';
+import {Sky} from 'three/addons/objects/Sky.js';
 
 /**
  *
@@ -14,15 +16,31 @@ import { AudioManager, ModelManager, TextureManager,  } from './utils.js';
 function makeMainLevel(scene, inputManager, camera) {
 	const level = new Level(scene);
 
-	const groundPlatform = new GameObject("Ground");
-	groundPlatform.add(new BasicShape(new THREE.BoxGeometry(180, 1, 180), new THREE.MeshBasicMaterial({ color: 0x654005 })));
+	const sky = new Sky();
+	sky.scale.setScalar( 450000 );
 
+	const phi = THREE.MathUtils.degToRad( 180 );
+	const theta = THREE.MathUtils.degToRad( 180 );
+	const sunPosition = new THREE.Vector3().setFromSphericalCoords( 1, phi, theta );
+	
+	sky.material.uniforms.sunPosition.value = sunPosition;
+	const groundPlatform = new GameObject("Ground");
+	groundPlatform.add(new BasicShape(new THREE.BoxGeometry(180, 1, 180), new THREE.MeshPhongMaterial({ color: 0x654005 })));
+
+	const dayLight = new THREE.DirectionalLight(0x7a49a5, 0.6);
+	dayLight.position.y = 5;
+	dayLight.position.x = 5;
+	dayLight.lookAt(groundPlatform.position);
 
 	const mysteryBox = new GameObject("MysteryBox");
 	mysteryBox.add(new MysteryBoxComp());
 	mysteryBox.position.y = 0.65;
 	mysteryBox.scale.copy(new THREE.Vector3(0.25, 0.25, 0.25));
 	mysteryBox.position.copy(new THREE.Vector3(3, 0.75, 10));
+
+	const boxLight = new THREE.PointLight(0xff0000, 0.7, 8);
+	boxLight.position.copy(mysteryBox.position);
+	boxLight.position.y += 1.5;
 
 	const player = new GameObject("Player");
 	player.add(new PlayerController(inputManager, camera));
@@ -39,6 +57,26 @@ function makeMainLevel(scene, inputManager, camera) {
 	level.add(player);
 	level.add(spawner);
 	level.add(mysteryBox);
+	level.scene.add(dayLight);
+	level.scene.add(boxLight);
+	level.scene.add(sky);
+
+	for (let x = -50; x < 50; x += 3) {
+		for (let z = -50; z < 50; z += 2) {
+			let r = Math.random() * 100;
+			if (r <= 10) {
+				let treeCopy = ModelManager.INSTANCE.getModel("tree").scene.clone();
+				treeCopy.position.copy(new THREE.Vector3(x, 0.5, z));
+				level.scene.add(treeCopy);
+			}else if (r > 25 && r <= 50) {
+				let rockCopy = ModelManager.INSTANCE.getModel("rock").scene.clone();
+				rockCopy.position.copy(new THREE.Vector3(x - 2, 0 + Math.random() * 0.25, z - 2));
+				rockCopy.scale.multiplyScalar(0.5);
+				rockCopy.rotation.setFromVector3(new THREE.Vector3(Math.random() * Math.PI /2, Math.random() * Math.PI, Math.random() * Math.PI / 4));
+				level.scene.add(rockCopy);
+			}
+		}
+	}
 
 	return level;
 }
@@ -67,6 +105,8 @@ async function main() {
 	ModelManager.INSTANCE.pushModelInfo("laser", "../models/gun.glb");
 	ModelManager.INSTANCE.pushModelInfo("danceBomb", "../models/gun.glb");
 	ModelManager.INSTANCE.pushModelInfo("box", "../models/box.glb");
+	ModelManager.INSTANCE.pushModelInfo("rock", "../models/rock.glb");
+	ModelManager.INSTANCE.pushModelInfo("tree", "../models/tree.glb");
 
 	await ModelManager.INSTANCE.loadModels();
 
