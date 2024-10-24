@@ -22,7 +22,7 @@ function makeMainLevel(scene, inputManager, camera) {
 	const phi = THREE.MathUtils.degToRad( 180 );
 	const theta = THREE.MathUtils.degToRad( 180 );
 	const sunPosition = new THREE.Vector3().setFromSphericalCoords( 1, phi, theta );
-	
+
 	sky.material.uniforms.sunPosition.value = sunPosition;
 	const groundPlatform = new GameObject("Ground");
 	groundPlatform.add(new BasicShape(new THREE.BoxGeometry(180, 1, 180), new THREE.MeshPhongMaterial({ color: 0x654005 })));
@@ -100,7 +100,7 @@ async function main() {
 
 	/* Models initialization */
 
-	ModelManager.INSTANCE.pushModelInfo("test", "../models/test.glb");
+	ModelManager.INSTANCE.pushModelInfo("zombie", "../models/zombie.glb");
 	ModelManager.INSTANCE.pushModelInfo("gun", "../models/gun.glb");
 	ModelManager.INSTANCE.pushModelInfo("rifle", "../models/rifle.glb");
 	ModelManager.INSTANCE.pushModelInfo("laser", "../models/raygun.glb");

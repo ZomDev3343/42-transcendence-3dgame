@@ -2,14 +2,14 @@ import { Vector3 } from "three";
 import { GameObject, ZombieAI, ZombieModel } from "./components";
 
 /**
- * @param {Vector3} pos 
+ * @param {Vector3} pos
  * @returns {GameObject} Zombie game object
  */
 export function makeZombie(pos, round, spawner) {
 	let zomb = new GameObject("Zombie");
 	let ai = new ZombieAI(spawner);
 	zomb.position.copy(pos);
-	zomb.position.y = 1.3;
+	zomb.position.y = 0.85;
 
 	ai._health = 2 + round;
 	zomb.add(ai);

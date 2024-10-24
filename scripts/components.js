@@ -635,13 +635,13 @@ export class AnimatedModel extends Component {
 
 export class ZombieModel extends AnimatedModel {
 	constructor() {
-		super(ModelManager.INSTANCE.getModel("test"));
+		super(ModelManager.INSTANCE.getModel("zombie"));
 		this.anim.addPose("idle");
 		this.anim.compileAnims();
-		this.scale.multiplyScalar(0.5);
+		this.scale.multiplyScalar(0.3);
+		this.anim.playAnim("idle");
 	}
 	create() {
-		this.anim.playAnim("idle");
 		super.create();
 	}
 };
@@ -845,6 +845,8 @@ export class MysteryBoxComp extends Component {
 			this.getLevel().player.removeComponent(oldGun);
 			if (weaponName === "rifle")
 				this.getLevel().player.add(new PlayerGun(input, 3, 2500, 80, 45, "rifle"));
+			else if (weaponName === "gun")
+				this.getLevel().player.add(new PlayerGun(input));
 			else if (weaponName === "laser")
 				this.getLevel().player.add(new PlayerGun(input, 100, 4000, 400, 45, "laser", "raygun"));
 		}
