@@ -276,7 +276,7 @@ export class PlayerController extends Component {
 		this._hitmarkerSprite.position.y = 1;
 		this._hitmarkerSprite.visible = false;
 		this._audioListener = new THREE.AudioListener();
-		this._flashlight = new THREE.PointLight(0xffffff, 0.25, 5, 0.2);
+		this._flashlight = new THREE.PointLight(0xffffff, 0.35, 8, 0.2);
 
 		window.addEventListener("mousemove", (ev) => {
 			if (this.input.clicked(0)) {
@@ -487,7 +487,6 @@ export class ZombieAI extends Component {
 			let dirX = player.position.x - this.parent.position.x;
 			let dirZ = player.position.z - this.parent.position.z;
 			this.parent.rotation.y = Math.atan2(dirX, dirZ);
-
 			this._isRefreshing = false;
 		}
 	}
@@ -776,7 +775,8 @@ export class ZombieSpawner extends Component {
 			if (this._shouldSpawn === true) {
 				let spawnPos = this.position.clone();
 
-				spawnPos.x += Math.random() * 2;
+				spawnPos.x += -8 + Math.random() * 16;
+				spawnPos.z += -8 + Math.random() * 16;
 				spawnPos.y = 1.5;
 				let zomb = makeZombie(spawnPos, this._round, this);
 				this.getLevel().add(zomb);

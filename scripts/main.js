@@ -50,8 +50,9 @@ function makeMainLevel(scene, inputManager, camera) {
 	const spawner = new GameObject("SpawnerManager");
 	spawner.position.y = 1;
 	spawner.add(new SpawnerManager());
-	spawner.add(new BasicShape(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshBasicMaterial({ color: 0xffffff })));
 	spawner.getComponent(SpawnerManager).addSpawner(new ZombieSpawner(spawner.position.add({ x: 5, y: 0, z: 5 })));
+	spawner.getComponent(SpawnerManager).addSpawner(new ZombieSpawner(spawner.position.add({ x: 25, y: 0, z: 15 })));
+	spawner.getComponent(SpawnerManager).addSpawner(new ZombieSpawner(spawner.position.add({ x: -5, y: 0, z: 25 })));
 
 	level.add(groundPlatform);
 	level.add(player);

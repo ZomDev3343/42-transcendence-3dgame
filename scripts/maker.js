@@ -11,7 +11,7 @@ export function makeZombie(pos, round, spawner) {
 	zomb.position.copy(pos);
 	zomb.position.y = 0.85;
 
-	ai._health = 2 + round;
+	ai._health = 2 + round / 4;
 	zomb.add(ai);
 	zomb.add(new ZombieModel());
 	zomb.getComponent(ZombieModel).gltf.scene.children[0].zombie = zomb;
