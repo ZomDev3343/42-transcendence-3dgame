@@ -27,8 +27,8 @@ function makeMainLevel(scene, inputManager, camera) {
 	const groundPlatform = new GameObject("Ground");
 	groundPlatform.add(new BasicShape(new THREE.BoxGeometry(180, 1, 180), new THREE.MeshPhongMaterial({ color: 0x654005 })));
 
-	const dayLight = new THREE.DirectionalLight(0x7a49a5, 0.6);
-	dayLight.position.y = 5;
+	const dayLight = new THREE.DirectionalLight(0x7a49a5, 0.8);
+	dayLight.position.y = 10;
 	dayLight.position.x = 5;
 	dayLight.lookAt(groundPlatform.position);
 
@@ -94,6 +94,9 @@ async function main() {
 
 	TextureManager.INSTANCE.pushTextureInfo("hitmarker", "../textures/hitmarker.png");
 	TextureManager.INSTANCE.pushTextureInfo("target", "../textures/target.png");
+	TextureManager.INSTANCE.pushTextureInfo("health_bar_good", "../textures/health_bar_good.jpg");
+	TextureManager.INSTANCE.pushTextureInfo("health_bar_bad", "../textures/health_bar_bad.jpg");
+	TextureManager.INSTANCE.pushTextureInfo("health_bar_dead", "../textures/health_bar_dead.jpg");
 
 	await TextureManager.INSTANCE.loadTextures();
 

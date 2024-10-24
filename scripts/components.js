@@ -267,6 +267,8 @@ export class PlayerController extends Component {
 		this._mouseX = 0;
 		this._health = 3;
 		this._immuneDelay = 1000;
+		this._regenDelay = 3000;
+		this._regenCountdown = -1;
 		this._immune = false;
 		this._targetSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: TextureManager.INSTANCE.getTexture("target") }));
 		this._targetSprite.scale.multiplyScalar(0.02);
@@ -277,6 +279,9 @@ export class PlayerController extends Component {
 		this._hitmarkerSprite.visible = false;
 		this._audioListener = new THREE.AudioListener();
 		this._flashlight = new THREE.PointLight(0xffffff, 0.35, 8, 0.2);
+		this._healthBarSprite = new THREE.Sprite(new THREE.SpriteMaterial({map: TextureManager.INSTANCE.getTexture("health_bar_good")}));
+		this._healthBarSprite.position.y = 0.63;
+		this._healthBarSprite.scale.multiplyScalar(0.25);
 
 		window.addEventListener("mousemove", (ev) => {
 			if (this.input.clicked(0)) {
@@ -284,7 +289,8 @@ export class PlayerController extends Component {
 
 				let dX = ev.clientX - this._mouseX;
 				this._mouseX = ev.clientX;
-				this.camera.rotation.y += -dX / 100;
+				if (this._health > 0)
+					this.camera.rotation.y += -dX / 100;
 			}
 		});
 
@@ -402,6 +408,9 @@ export class PlayerController extends Component {
 		this._hitmarkerSprite.position.z = this.parent.position.z - 0.5 * this.getForward().z;
 		this._audioListener.position.copy(this.parent.position);
 		this._flashlight.position.copy(this.parent.position);
+		this._healthBarSprite.position.x = this.parent.position.x - 0.5 * this.getForward().x;
+		this._healthBarSprite.position.z = this.parent.position.z - 0.5 * this.getForward().z;
+
 	}
 
 	create() {
@@ -409,18 +418,32 @@ export class PlayerController extends Component {
 		this.parent.scene.add(this._hitmarkerSprite);
 		this.parent.scene.add(this._audioListener);
 		this.parent.scene.add(this._flashlight);
+		this.parent.scene.add(this._healthBarSprite);
 	}
 	remove() {
 		this.parent.scene.remove(this._targetSprite);
 		this.parent.scene.remove(this._hitmarkerSprite);
 		this.parent.scene.remove(this._audioListener);
 		this.parent.scene.remove(this._flashlight);
+		this.parent.scene.remove(this._healthBarSprite);
 	}
 	async takeDamage() {
 		if (this._immune === false) {
 			this._health--;
+			if (this._health >= 1)
+				this._healthBarSprite.material.map = TextureManager.INSTANCE.getTexture("health_bar_bad");
+			else
+				this._healthBarSprite.material.map = TextureManager.INSTANCE.getTexture("health_bar_dead");
 			LOG_DEBUG("Player took damage!");
 			AudioManager.INSTANCE.playSound("playerHit", this._audioListener, false, 0.1);
+			if (this._regenCountdown !== -1) {
+				window.clearTimeout(this._regenCountdown);
+				this._regenCountdown = -1;
+			}
+			this._regenCountdown = setTimeout(() => {
+				this._health = 3;
+				this._healthBarSprite.material.map = TextureManager.INSTANCE.getTexture("health_bar_good");
+			}, this._regenDelay);
 			if (this._health <= 0)
 				this.playerDie();
 			else {
@@ -432,6 +455,14 @@ export class PlayerController extends Component {
 	}
 	playerDie() {
 		this._immune = true;
+		if (this._regenCountdown !== -1) {
+			window.clearTimeout(this._regenCountdown);
+			this._regenCountdown = -1;
+		}
+		this._moveSpeed = 0;
+		this.camera.rotation.x = Math.PI / 3;
+		this.camera.rotation.z = Math.PI / 6;
+		document.getElementById("info_text").textContent = "Vous etes mort!";
 		LOG_DEBUG("Player died!");
 	}
 	updateScoreText() {
